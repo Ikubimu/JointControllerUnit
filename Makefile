@@ -75,7 +75,8 @@ C_SOURCES = \
 	$(HAL_DIR)/Src/stm32f1xx_hal_adc_ex.c \
 	$(HAL_DIR)/Src/stm32f1xx_hal_can.c \
 	$(HAL_DIR)/Src/stm32f1xx_hal_tim.c \
-	$(HAL_DIR)/Src/stm32f1xx_hal_tim_ex.c
+	$(HAL_DIR)/Src/stm32f1xx_hal_tim_ex.c \
+	$(HAL_DIR)/Src/stm32f1xx_hal_uart.c
 
 ASM_SOURCES = \
 	$(DEVICE_DIR)/Source/Templates/gcc/startup_stm32f103xb.s
