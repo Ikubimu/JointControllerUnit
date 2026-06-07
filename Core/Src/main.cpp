@@ -26,6 +26,7 @@
 #include "PWM.hpp"
 #include "ADC.hpp"
 #include "CAN.hpp"
+#include "Motor.hpp"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -112,14 +113,22 @@ int main(void)
   MX_USART1_UART_Init();
   MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
-  DigitalOutput led(GPIOB, GPIO_PIN_0);
+  DigitalOutput led(GPIOC, GPIO_PIN_13);
   DigitalOutput out1(GPIOB, GPIO_PIN_1);
 
-  PWM motor(&htim1, TIM_CHANNEL_1, 8000000);
-  motor.start();
-  motor.set_duty_percent(50.0f);
+  DigitalOutput ms1(GPIOB, GPIO_PIN_11);
+  DigitalOutput ms2(GPIOB, GPIO_PIN_12);
+  DigitalOutput ms3(GPIOB, GPIO_PIN_13);
+
+  PWM pwm_motor(&htim1, TIM_CHANNEL_1, 8000000);
+  pwm_motor.start();
+  pwm_motor.set_duty_percent(50.0f);
 
   ADC adc(&hadc1);
+
+  Motor motor(pwm_motor, adc, ADC_CHANNEL_1, ms1, ms2, ms3);
+  motor.set_microstep(MICROSTEP_16);
+  motor.set_speed(1.0f);
 
   CAN can(&hcan);
   can.start(0, 0);
@@ -136,8 +145,7 @@ int main(void)
   while (1)
   {
     counter++;
-    uint32_t adc0 = adc.read_channel(ADC_CHANNEL_1);
-    uint32_t adc1 = adc.read_channel(ADC_CHANNEL_5);
+    float pos = motor.get_position_rad();
 
     canMsg.data[0] = 0xAA;
     canMsg.data[1] = 0xBB;
@@ -153,11 +161,11 @@ int main(void)
     else
       printf("CAN TX ERROR\r\n");
 
-    printf("Counter: %lu | ADC0: %lu | ADC1: %lu\r\n",
-               counter, adc0, adc1);
+    printf("Pos: %.3f rad | Speed: %.2f rad/s | Count: %lu\r\n",
+           pos, motor.get_speed(), counter);
     led.toggle();
     out1.write(true);
-    HAL_Delay(1000);
+    HAL_Delay(100);
   }
   /* USER CODE END 3 */
 }

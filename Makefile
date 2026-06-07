@@ -90,7 +90,8 @@ CPP_SOURCES = \
 	$(SRC_DIR)/LOW/DigitalOutput.cpp \
 	$(SRC_DIR)/LOW/PWM.cpp \
 	$(SRC_DIR)/LOW/ADC.cpp \
-	$(SRC_DIR)/LOW/CAN.cpp
+	$(SRC_DIR)/LOW/CAN.cpp \
+	$(SRC_DIR)/Motor.cpp
 
 ASM_SOURCES = \
 	$(DEVICE_DIR)/Source/Templates/gcc/startup_stm32f103xb.s
