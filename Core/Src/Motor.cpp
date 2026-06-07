@@ -12,10 +12,12 @@ static const uint8_t microstep_table[5][3] = {
     {1, 1, 1},  // MICROSTEP_16 (sixteenth)
 };
 
-static volatile uint32_t s_raw_encoder = 0;
 static volatile float   s_position_rad = 0.0f;
 static volatile float   s_actual_speed = 0.0f;
 static volatile bool    s_direction = DIR_CW;
+
+static int32_t          s_rot_count = 0;
+static float            s_ratio = GEAR_RATIO;
 
 Motor *Motor::s_instance = nullptr;
 
@@ -29,34 +31,34 @@ static void vTaskEncoder(void *pvParameters) {
         int32_t delta_raw = (int32_t)curr_raw - (int32_t)prev_raw;
 
         if (s_direction == DIR_CW) {
-            if (delta_raw < 0)
+            if (delta_raw < 0) {
                 delta_raw += 4096;
+                s_rot_count++;
+            }
         } else {
-            if (delta_raw > 0)
+            if (delta_raw > 0) {
                 delta_raw -= 4096;
+                s_rot_count--;
+            }
         }
 
-        s_actual_speed = (float)delta_raw * 2.0f * MOTOR_PI / (4095.0f * delta_sec);
-        s_position_rad = (float)curr_raw * 2.0f * MOTOR_PI / 4095.0f;
-        s_raw_encoder = curr_raw;
+        float frac = (float)curr_raw * 2.0f * MOTOR_PI / 4095.0f;
+        s_position_rad = frac / s_ratio + (2.0f * MOTOR_PI / s_ratio) * (float)s_rot_count;
+        s_actual_speed = (float)delta_raw * 2.0f * MOTOR_PI / (4095.0f * delta_sec * s_ratio);
         prev_raw = curr_raw;
     }
 }
 
 Motor& Motor::getInstance(PWM &pwm, ADC &adc, uint32_t adc_channel,
                           DigitalOutput &ms1, DigitalOutput &ms2, DigitalOutput &ms3,
-                          DigitalOutput &dir) {
+                          DigitalOutput &dir, float ratio) {
     if (s_instance == nullptr)
-        s_instance = new Motor(pwm, adc, adc_channel, ms1, ms2, ms3, dir);
+        s_instance = new Motor(pwm, adc, adc_channel, ms1, ms2, ms3, dir, ratio);
     return *s_instance;
 }
 
 Motor& Motor::getInstance() {
     return *s_instance;
-}
-
-uint32_t Motor::get_raw_encoder() {
-    return s_raw_encoder;
 }
 
 float Motor::get_actual_speed() {
@@ -69,11 +71,12 @@ bool Motor::get_direction() {
 
 Motor::Motor(PWM &pwm, ADC &adc, uint32_t adc_channel,
              DigitalOutput &ms1, DigitalOutput &ms2, DigitalOutput &ms3,
-             DigitalOutput &dir)
+             DigitalOutput &dir, float ratio)
     : pwm(pwm), adc(adc), adc_channel(adc_channel),
       ms1(ms1), ms2(ms2), ms3(ms3), dir(dir),
       microstep(MICROSTEP_1)
 {
+    s_ratio = ratio;
     pwm.set_duty_percent(50.0f);
     set_direction(DIR_CW);
     apply_microstep();
@@ -90,6 +93,10 @@ void Motor::set_speed(float rad_s) {
 void Motor::set_direction(bool cw) {
     s_direction = cw;
     dir.write(cw);
+}
+
+void Motor::set_ratio(float ratio) {
+    s_ratio = ratio;
 }
 
 float Motor::get_position_rad() {

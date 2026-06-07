@@ -19,18 +19,20 @@
 #define DIR_CW  0
 #define DIR_CCW 1
 
+#define GEAR_RATIO 22.0f
+
 class Motor {
 public:
     static Motor& getInstance(PWM &pwm, ADC &adc, uint32_t adc_channel,
                               DigitalOutput &ms1, DigitalOutput &ms2, DigitalOutput &ms3,
-                              DigitalOutput &dir);
+                              DigitalOutput &dir, float ratio = GEAR_RATIO);
     static Motor& getInstance();
-    static uint32_t get_raw_encoder();
     static float   get_actual_speed();
     static bool    get_direction();
 
     void    set_speed(float rad_s);
     void    set_direction(bool cw);
+    void    set_ratio(float ratio);
     float   get_position_rad();
     uint32_t get_position_raw();
     void    set_microstep(uint8_t step);
@@ -38,7 +40,7 @@ public:
 private:
     Motor(PWM &pwm, ADC &adc, uint32_t adc_channel,
           DigitalOutput &ms1, DigitalOutput &ms2, DigitalOutput &ms3,
-          DigitalOutput &dir);
+          DigitalOutput &dir, float ratio);
     ~Motor() = default;
     Motor(const Motor&) = delete;
     Motor& operator=(const Motor&) = delete;
