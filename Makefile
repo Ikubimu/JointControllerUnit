@@ -23,6 +23,7 @@ DRIVERS_DIR = $(PROJECT_ROOT)/Drivers
 CMSIS_DIR = $(DRIVERS_DIR)/CMSIS
 HAL_DIR = $(DRIVERS_DIR)/STM32F1xx_HAL_Driver
 DEVICE_DIR = $(CMSIS_DIR)/Device/ST/STM32F1xx
+FREERTOS_DIR = $(PROJECT_ROOT)/FreeRTOS
 
 # MCU defines for STM32F103C8T6
 DEFS = -DUSE_HAL_DRIVER -DSTM32F103xB
@@ -34,7 +35,10 @@ INCLUDES = \
 	-I$(CMSIS_DIR)/Include/arm \
 	-I$(HAL_DIR)/Inc \
 	-I$(SRC_DIR)/../Inc \
-	-I$(SRC_DIR)/../Inc/LOW
+	-I$(SRC_DIR)/../Inc/LOW \
+	-I$(FREERTOS_DIR) \
+	-I$(FREERTOS_DIR)/Source/include \
+	-I$(FREERTOS_DIR)/Source/portable/GCC/ARM_CM3
 
 # Optimization level
 OPT = -Og
@@ -82,7 +86,16 @@ C_SOURCES = \
 	$(HAL_DIR)/Src/stm32f1xx_hal_can.c \
 	$(HAL_DIR)/Src/stm32f1xx_hal_tim.c \
 	$(HAL_DIR)/Src/stm32f1xx_hal_tim_ex.c \
-	$(HAL_DIR)/Src/stm32f1xx_hal_uart.c
+	$(HAL_DIR)/Src/stm32f1xx_hal_uart.c \
+	$(FREERTOS_DIR)/Source/tasks.c \
+	$(FREERTOS_DIR)/Source/queue.c \
+	$(FREERTOS_DIR)/Source/list.c \
+	$(FREERTOS_DIR)/Source/timers.c \
+	$(FREERTOS_DIR)/Source/event_groups.c \
+	$(FREERTOS_DIR)/Source/stream_buffer.c \
+	$(FREERTOS_DIR)/Source/croutine.c \
+	$(FREERTOS_DIR)/Source/portable/GCC/ARM_CM3/port.c \
+	$(FREERTOS_DIR)/Source/portable/MemMang/heap_4.c
 
 # C++ source files
 CPP_SOURCES = \

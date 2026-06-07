@@ -26,6 +26,8 @@
 #include "PWM.hpp"
 #include "ADC.hpp"
 #include "CAN.hpp"
+#include "FreeRTOS.h"
+#include "task.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
