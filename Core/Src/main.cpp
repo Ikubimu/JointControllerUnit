@@ -26,6 +26,8 @@
 #include "PWM.hpp"
 #include "ADC.hpp"
 #include "CAN.hpp"
+#include "FreeRTOS.h"
+#include "task.h"
 #include "Motor.hpp"
 /* USER CODE END Includes */
 
@@ -56,6 +58,13 @@ UART_HandleTypeDef huart1;
 
 /* USER CODE BEGIN PV */
 
+DigitalOutput led(GPIOC, GPIO_PIN_13);
+DigitalOutput ledPB0(GPIOB, GPIO_PIN_0);
+DigitalOutput out1(GPIOB, GPIO_PIN_1);
+ADC adc(&hadc1);
+CAN can(&hcan);
+CAN_Message canMsg;
+
 /* USER CODE END PV */
 
 
@@ -70,11 +79,60 @@ static void MX_TIM1_Init(void);
 static void MX_USART1_UART_Init(void);
 static void MX_TIM2_Init(void);
 /* USER CODE BEGIN PFP */
-
+void vTaskCAN(void *pvParameters);
+void vTaskADC(void *pvParameters);
+void vTaskLED(void *pvParameters);
+void vTaskLEDPB0(void *pvParameters);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+
+void vTaskCAN(void *pvParameters) {
+  uint32_t counter = 0;
+  for (;;) {
+    counter++;
+    canMsg.data[0] = 0xAA;
+    canMsg.data[1] = 0xBB;
+    canMsg.data[2] = 0xCC;
+    canMsg.data[3] = 0xDD;
+    canMsg.data[4] = 0x11;
+    canMsg.data[5] = 0x22;
+    canMsg.data[6] = 0x33;
+    canMsg.data[7] = 0x44;
+
+    if (can.write_message(&canMsg))
+      printf("CAN TX: ID=0x%03lX Count=%lu\r\n", canMsg.id, counter);
+    else
+      printf("CAN TX ERROR\r\n");
+
+    vTaskDelay(pdMS_TO_TICKS(1000));
+  }
+}
+
+void vTaskADC(void *pvParameters) {
+  for (;;) {
+    uint32_t adc0 = adc.read_channel(ADC_CHANNEL_1);
+    uint32_t adc1 = adc.read_channel(ADC_CHANNEL_5);
+    printf("ADC0: %lu | ADC1: %lu\r\n", adc0, adc1);
+    vTaskDelay(pdMS_TO_TICKS(2000));
+  }
+}
+
+void vTaskLED(void *pvParameters) {
+  for (;;) {
+    led.toggle();
+    out1.write(true);
+    vTaskDelay(pdMS_TO_TICKS(1000));
+  }
+}
+
+void vTaskLEDPB0(void *pvParameters) {
+  for (;;) {
+    ledPB0.toggle();
+    vTaskDelay(pdMS_TO_TICKS(350));
+  }
+}
 
 /* USER CODE END 0 */
 
@@ -113,59 +171,22 @@ int main(void)
   MX_USART1_UART_Init();
   MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
-  DigitalOutput led(GPIOC, GPIO_PIN_13);
-  DigitalOutput out1(GPIOB, GPIO_PIN_1);
-
-  DigitalOutput ms1(GPIOB, GPIO_PIN_11);
-  DigitalOutput ms2(GPIOB, GPIO_PIN_12);
-  DigitalOutput ms3(GPIOB, GPIO_PIN_13);
-
-  PWM pwm_motor(&htim1, TIM_CHANNEL_1, 8000000);
-  pwm_motor.start();
-  pwm_motor.set_duty_percent(50.0f);
-
-  ADC adc(&hadc1);
-
-  Motor motor(pwm_motor, adc, ADC_CHANNEL_1, ms1, ms2, ms3);
-  motor.set_microstep(MICROSTEP_16);
-  motor.set_speed(1.0f);
-
-  CAN can(&hcan);
   can.start(0, 0);
-
-  CAN_Message canMsg;
   canMsg.id = 0x123;
   canMsg.dlc = 8;
   canMsg.is_extended = false;
+
+  xTaskCreate(vTaskCAN, "CAN", 128, NULL, 1, NULL);
+  xTaskCreate(vTaskADC, "ADC", 128, NULL, 1, NULL);
+  xTaskCreate(vTaskLED, "LED", 128, NULL, 1, NULL);
+  xTaskCreate(vTaskLEDPB0, "LED0", 128, NULL, 1, NULL);
+
+  vTaskStartScheduler();
   /* USER CODE END 2 */
 
-  /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  uint32_t counter = 0;
-  while (1)
-  {
-    counter++;
-    float pos = motor.get_position_rad();
-
-    canMsg.data[0] = 0xAA;
-    canMsg.data[1] = 0xBB;
-    canMsg.data[2] = 0xCC;
-    canMsg.data[3] = 0xDD;
-    canMsg.data[4] = 0x11;
-    canMsg.data[5] = 0x22;
-    canMsg.data[6] = 0x33;
-    canMsg.data[7] = 0x44;
-
-    if (can.write_message(&canMsg))
-      printf("CAN TX: ID=0x%03lX Count=%lu\r\n", canMsg.id, counter);
-    else
-      printf("CAN TX ERROR\r\n");
-
-    printf("Pos: %.3f rad | Speed: %.2f rad/s | Count: %lu\r\n",
-           pos, motor.get_speed(), counter);
-    led.toggle();
-    out1.write(true);
-    HAL_Delay(100);
+  for (;;) {
+    vTaskDelay(pdMS_TO_TICKS(1000));
   }
   /* USER CODE END 3 */
 }
@@ -496,7 +517,23 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
   /* USER CODE BEGIN MX_GPIO_Init_2 */
+  __HAL_RCC_GPIOC_CLK_ENABLE();
 
+  GPIO_InitStruct.Pin = GPIO_PIN_13;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
+
+  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_RESET);
+
+  GPIO_InitStruct.Pin = GPIO_PIN_0;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0, GPIO_PIN_RESET);
   /* USER CODE END MX_GPIO_Init_2 */
 }
 
