@@ -8,6 +8,8 @@ TOOLCHAIN_PATH = /opt/st/stm32cubeclt_1.19.0/GNU-tools-for-STM32/bin
 PREFIX = arm-none-eabi-
 
 CC = $(TOOLCHAIN_PATH)/$(PREFIX)gcc
+CXX = $(TOOLCHAIN_PATH)/$(PREFIX)g++
+LD = $(TOOLCHAIN_PATH)/$(PREFIX)g++
 AS = $(TOOLCHAIN_PATH)/$(PREFIX)gcc
 OC = $(TOOLCHAIN_PATH)/$(PREFIX)objcopy
 OD = $(TOOLCHAIN_PATH)/$(PREFIX)objdump
@@ -31,17 +33,22 @@ INCLUDES = \
 	-I$(CMSIS_DIR)/Include \
 	-I$(CMSIS_DIR)/Include/arm \
 	-I$(HAL_DIR)/Inc \
-	-I$(SRC_DIR)/../Inc
+	-I$(SRC_DIR)/../Inc \
+	-I$(SRC_DIR)/../Inc/LOW
 
 # Optimization level
 OPT = -Og
 
-# Compiler flags for Cortex-M3
-CFLAGS = $(OPT) -Wall -fdata-sections -ffunction-sections \
+# Common flags
+COMMON_FLAGS = $(OPT) -Wall -fdata-sections -ffunction-sections \
 	--specs=nano.specs --specs=nosys.specs \
 	-mcpu=cortex-m3 -mthumb \
 	-fno-delete-null-pointer-checks -fno-strict-aliasing \
 	$(DEFS) $(INCLUDES)
+
+# Compiler flags
+CFLAGS = $(COMMON_FLAGS)
+CXXFLAGS = $(COMMON_FLAGS) -std=c++17 -fno-exceptions -fno-rtti -fno-use-cxa-atexit
 
 ASFLAGS = $(OPT) -Wall -fdata-sections -ffunction-sections \
 	--specs=nano.specs --specs=nosys.specs \
@@ -52,11 +59,10 @@ LDFLAGS = -T$(PROJECT_ROOT)/STM32F103C8T6_FLASH.ld \
 	-Wl,--gc-sections -Wl,-Map=$(BUILD_DIR)/$(TARGET).map \
 	-mcpu=cortex-m3 -mthumb \
 	--specs=nano.specs --specs=nosys.specs \
-	-Wl,--start-group -lc -lm -lnosys -Wl,--end-group
+	-Wl,--start-group -lc -lm -lstdc++ -lnosys -Wl,--end-group
 
-# Source files
+# C source files
 C_SOURCES = \
-	$(SRC_DIR)/main.c \
 	$(SRC_DIR)/stm32f1xx_it.c \
 	$(SRC_DIR)/stm32f1xx_hal_msp.c \
 	$(SRC_DIR)/system_stm32f1xx.c \
@@ -78,11 +84,20 @@ C_SOURCES = \
 	$(HAL_DIR)/Src/stm32f1xx_hal_tim_ex.c \
 	$(HAL_DIR)/Src/stm32f1xx_hal_uart.c
 
+# C++ source files
+CPP_SOURCES = \
+	$(SRC_DIR)/main.cpp \
+	$(SRC_DIR)/LOW/DigitalOutput.cpp \
+	$(SRC_DIR)/LOW/PWM.cpp \
+	$(SRC_DIR)/LOW/ADC.cpp \
+	$(SRC_DIR)/LOW/CAN.cpp
+
 ASM_SOURCES = \
 	$(DEVICE_DIR)/Source/Templates/gcc/startup_stm32f103xb.s
 
 # Object files (flattened to single directory)
 OBJECTS = $(patsubst $(PROJECT_ROOT)/%,$(BUILD_DIR)/%,$(C_SOURCES:%.c=%.o))
+OBJECTS += $(patsubst $(PROJECT_ROOT)/%,$(BUILD_DIR)/%,$(CPP_SOURCES:%.cpp=%.o))
 OBJECTS += $(patsubst $(PROJECT_ROOT)/%,$(BUILD_DIR)/%,$(ASM_SOURCES:%.s=%.o))
 
 # Pattern rules
@@ -91,6 +106,11 @@ $(BUILD_DIR)/%.o: $(PROJECT_ROOT)/%.c | $(BUILD_DIR)
 	@echo "Compiling $<"
 	$(CC) -c $(CFLAGS) -o $@ $<
 
+$(BUILD_DIR)/%.o: $(PROJECT_ROOT)/%.cpp | $(BUILD_DIR)
+	@mkdir -p $(dir $@)
+	@echo "Compiling $<"
+	$(CXX) -c $(CXXFLAGS) -o $@ $<
+
 $(BUILD_DIR)/%.o: $(PROJECT_ROOT)/%.s | $(BUILD_DIR)
 	@mkdir -p $(dir $@)
 	@echo "Assembling $<"
@@ -98,7 +118,7 @@ $(BUILD_DIR)/%.o: $(PROJECT_ROOT)/%.s | $(BUILD_DIR)
 
 $(BUILD_DIR)/$(TARGET).elf: $(OBJECTS)
 	@echo "Linking $@"
-	$(CC) $(OBJECTS) $(LDFLAGS) -o $@
+	$(LD) $(OBJECTS) $(LDFLAGS) -o $@
 	@echo "Creating binary..."
 	$(OC) -O binary $@ $(BUILD_DIR)/$(TARGET).bin
 	@echo "Creating hex..."

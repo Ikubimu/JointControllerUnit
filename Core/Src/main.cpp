@@ -22,6 +22,10 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include <stdio.h>
+#include "DigitalOutput.hpp"
+#include "PWM.hpp"
+#include "ADC.hpp"
+#include "CAN.hpp"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -51,11 +55,6 @@ UART_HandleTypeDef huart1;
 
 /* USER CODE BEGIN PV */
 
-CAN_TxHeaderTypeDef canTxHeader;
-uint8_t canTxData[8];
-uint32_t canTxMailbox;
-uint8_t canMsgCounter = 0;
-
 /* USER CODE END PV */
 
 
@@ -75,26 +74,6 @@ static void MX_TIM2_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-
-uint32_t Read_ADC_Channel(uint32_t channel)
-{
-    ADC_ChannelConfTypeDef sConfig = {0};
-
-    sConfig.Channel = channel;
-    sConfig.Rank = ADC_REGULAR_RANK_1;
-    sConfig.SamplingTime = ADC_SAMPLETIME_55CYCLES_5;
-
-    HAL_ADC_ConfigChannel(&hadc1, &sConfig);
-
-    HAL_ADC_Start(&hadc1);
-    HAL_ADC_PollForConversion(&hadc1, HAL_MAX_DELAY);
-
-    uint32_t val = HAL_ADC_GetValue(&hadc1);
-
-    HAL_ADC_Stop(&hadc1);
-
-    return val;
-}
 
 /* USER CODE END 0 */
 
@@ -133,66 +112,51 @@ int main(void)
   MX_USART1_UART_Init();
   MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
-  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_1, GPIO_PIN_SET);
-  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
-  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, FREQ / 2);
+  DigitalOutput led(GPIOB, GPIO_PIN_0);
+  DigitalOutput out1(GPIOB, GPIO_PIN_1);
 
-  CAN_FilterTypeDef canFilter = {0};
-  canFilter.FilterBank = 0;
-  canFilter.FilterMode = CAN_FILTERMODE_IDMASK;
-  canFilter.FilterScale = CAN_FILTERSCALE_32BIT;
-  canFilter.FilterIdHigh = 0;
-  canFilter.FilterIdLow = 0;
-  canFilter.FilterMaskIdHigh = 0;
-  canFilter.FilterMaskIdLow = 0;
-  canFilter.FilterFIFOAssignment = CAN_RX_FIFO0;
-  canFilter.FilterActivation = CAN_FILTER_ENABLE;
-  HAL_CAN_ConfigFilter(&hcan, &canFilter);
+  PWM motor(&htim1, TIM_CHANNEL_1, 8000000);
+  motor.start();
+  motor.set_duty_percent(50.0f);
 
-  HAL_CAN_Start(&hcan);
+  ADC adc(&hadc1);
 
-  canTxHeader.StdId = 0x123;
-  canTxHeader.ExtId = 0;
-  canTxHeader.IDE = CAN_ID_STD;
-  canTxHeader.RTR = CAN_RTR_DATA;
-  canTxHeader.DLC = 8;
-  canTxHeader.TransmitGlobalTime = DISABLE;
+  CAN can(&hcan);
+  can.start(0, 0);
+
+  CAN_Message canMsg;
+  canMsg.id = 0x123;
+  canMsg.dlc = 8;
+  canMsg.is_extended = false;
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   uint32_t counter = 0;
-  uint32_t adc0 = 0;
-  uint32_t adc1 = 0;
   while (1)
   {
     counter++;
-    adc0 = Read_ADC_Channel(ADC_CHANNEL_1);
-    adc1 = Read_ADC_Channel(ADC_CHANNEL_5);
+    uint32_t adc0 = adc.read_channel(ADC_CHANNEL_1);
+    uint32_t adc1 = adc.read_channel(ADC_CHANNEL_5);
 
-    canTxData[0] = 0xAA;
-    canTxData[1] = 0xBB;
-    canTxData[2] = 0xCC;
-    canTxData[3] = 0xDD;
-    canTxData[4] = 0x11;
-    canTxData[5] = 0x22;
-    canTxData[6] = 0x33;
-    canTxData[7] = 0x44;
+    canMsg.data[0] = 0xAA;
+    canMsg.data[1] = 0xBB;
+    canMsg.data[2] = 0xCC;
+    canMsg.data[3] = 0xDD;
+    canMsg.data[4] = 0x11;
+    canMsg.data[5] = 0x22;
+    canMsg.data[6] = 0x33;
+    canMsg.data[7] = 0x44;
 
-    if (HAL_CAN_AddTxMessage(&hcan, &canTxHeader, canTxData, &canTxMailbox) == HAL_OK)
-    {
-      canMsgCounter++;
-      printf("CAN TX: ID=0x%03lX Mailbox=%lu Count=%u\r\n",
-             canTxHeader.StdId, canTxMailbox, canMsgCounter);
-    }
+    if (can.write_message(&canMsg))
+      printf("CAN TX: ID=0x%03lX Count=%lu\r\n", canMsg.id, counter);
     else
-    {
       printf("CAN TX ERROR\r\n");
-    }
 
     printf("Counter: %lu | ADC0: %lu | ADC1: %lu\r\n",
                counter, adc0, adc1);
-    HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_0);
+    led.toggle();
+    out1.write(true);
     HAL_Delay(1000);
   }
   /* USER CODE END 3 */
