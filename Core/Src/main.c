@@ -51,6 +51,11 @@ UART_HandleTypeDef huart1;
 
 /* USER CODE BEGIN PV */
 
+CAN_TxHeaderTypeDef canTxHeader;
+uint8_t canTxData[8];
+uint32_t canTxMailbox;
+uint8_t canMsgCounter = 0;
+
 /* USER CODE END PV */
 
 
@@ -131,6 +136,27 @@ int main(void)
   HAL_GPIO_WritePin(GPIOB, GPIO_PIN_1, GPIO_PIN_SET);
   HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
   __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, FREQ / 2);
+
+  CAN_FilterTypeDef canFilter = {0};
+  canFilter.FilterBank = 0;
+  canFilter.FilterMode = CAN_FILTERMODE_IDMASK;
+  canFilter.FilterScale = CAN_FILTERSCALE_32BIT;
+  canFilter.FilterIdHigh = 0;
+  canFilter.FilterIdLow = 0;
+  canFilter.FilterMaskIdHigh = 0;
+  canFilter.FilterMaskIdLow = 0;
+  canFilter.FilterFIFOAssignment = CAN_RX_FIFO0;
+  canFilter.FilterActivation = CAN_FILTER_ENABLE;
+  HAL_CAN_ConfigFilter(&hcan, &canFilter);
+
+  HAL_CAN_Start(&hcan);
+
+  canTxHeader.StdId = 0x123;
+  canTxHeader.ExtId = 0;
+  canTxHeader.IDE = CAN_ID_STD;
+  canTxHeader.RTR = CAN_RTR_DATA;
+  canTxHeader.DLC = 8;
+  canTxHeader.TransmitGlobalTime = DISABLE;
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -143,6 +169,26 @@ int main(void)
     counter++;
     adc0 = Read_ADC_Channel(ADC_CHANNEL_1);
     adc1 = Read_ADC_Channel(ADC_CHANNEL_5);
+
+    canTxData[0] = 0xAA;
+    canTxData[1] = 0xBB;
+    canTxData[2] = 0xCC;
+    canTxData[3] = 0xDD;
+    canTxData[4] = 0x11;
+    canTxData[5] = 0x22;
+    canTxData[6] = 0x33;
+    canTxData[7] = 0x44;
+
+    if (HAL_CAN_AddTxMessage(&hcan, &canTxHeader, canTxData, &canTxMailbox) == HAL_OK)
+    {
+      canMsgCounter++;
+      printf("CAN TX: ID=0x%03lX Mailbox=%lu Count=%u\r\n",
+             canTxHeader.StdId, canTxMailbox, canMsgCounter);
+    }
+    else
+    {
+      printf("CAN TX ERROR\r\n");
+    }
 
     printf("Counter: %lu | ADC0: %lu | ADC1: %lu\r\n",
                counter, adc0, adc1);
