@@ -1,4 +1,5 @@
 #include "StateMachine.hpp"
+#include "FlagUtils.hpp"
 
 StateMachine& StateMachine::get() {
     static StateMachine root;
@@ -16,6 +17,15 @@ StateMachine& StateMachine::get() {
         sub.addState(ACTION, 1);
         sub.addState(PAUSE, 2);
         root.states[IDLE].setSubMachine(&sub);
+
+        root.addTransition(INIT, [] { return flagGet(COMMUNICATION_OK_FLAG); }, IDLE);
+        root.addTransition(IDLE, [] { return flagGet(ERROR_FLAG); }, FAULT);
+
+        sub.addTransition(0, [] { return flagGet(ACTION_MOVE_FLAG); }, ACTION);
+        sub.addTransition(1, [] { return flagGet(ACTION_STOP_FLAG); }, PAUSE);
+        sub.addTransition(2, [] { return flagGet(ACTION_RESUME_FLAG); }, ACTION);
+        sub.addTransition(2, [] { return flagGet(ACTION_IDLE_FLAG); }, STAN_BY);
+        sub.addTransition(1, [] { return flagGet(ACTION_IDLE_FLAG); }, STAN_BY);
     }
 
     return root;

@@ -7,6 +7,7 @@
 #include "ADC.hpp"
 #include "CAN.hpp"
 #include "StateMachine/StateMachine.hpp"
+#include "FlagUtils.hpp"
 #include "FreeRTOS.h"
 #include "task.h"
 
