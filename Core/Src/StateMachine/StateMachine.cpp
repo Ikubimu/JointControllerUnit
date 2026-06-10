@@ -1,5 +1,6 @@
 #include "StateMachine.hpp"
 #include "FlagUtils.hpp"
+#include "Peripherals.hpp"
 
 StateMachine& StateMachine::get() {
     static StateMachine root;
@@ -20,6 +21,11 @@ StateMachine& StateMachine::get() {
 
         root.addTransition(INIT, [] { return flagGet(COMMUNICATION_OK_FLAG); }, IDLE);
         root.addTransition(IDLE, [] { return flagGet(ERROR_FLAG); }, FAULT);
+
+        root.addEntryAction(IDLE, [] { idlePIN.write(true); });
+        root.addExitAction(IDLE, [] { idlePIN.write(false); });
+        root.addEntryAction(FAULT, [] { faultPIN.write(true); });
+        root.addExitAction(FAULT, [] { faultPIN.write(false); });
 
         sub.addTransition(0, [] { return flagGet(ACTION_MOVE_FLAG); }, ACTION);
         sub.addTransition(1, [] { return flagGet(ACTION_STOP_FLAG); }, PAUSE);

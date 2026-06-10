@@ -1,14 +1,5 @@
 #include "JointController.hpp"
-
-extern CAN_HandleTypeDef hcan;
-extern ADC_HandleTypeDef hadc1;
-
-DigitalOutput led(GPIOC, GPIO_PIN_13);
-DigitalOutput ledPB0(GPIOB, GPIO_PIN_0);
-DigitalOutput out1(GPIOB, GPIO_PIN_1);
-ADC adc(&hadc1);
-CAN can(&hcan);
-CAN_Message canMsg;
+#include "Peripherals.hpp"
 
 void vTaskCAN(void *pvParameters) {
   (void)pvParameters;
@@ -67,10 +58,10 @@ void jointMainTask(void *pvParameters) {
   canMsg.dlc = 8;
   canMsg.is_extended = false;
 
-  StateMachine::get();
+  StateMachine &sm = StateMachine::get();
 
   for (;;) {
-    StateMachine::get().update();
+    sm.update();
     vTaskDelay(pdMS_TO_TICKS(100));
   }
 }
