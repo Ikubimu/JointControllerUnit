@@ -11,7 +11,6 @@
 #include "FreeRTOS.h"
 #include "task.h"
 
-void vTaskCAN(void *pvParameters);
 void vTaskADC(void *pvParameters);
 void vTaskLED(void *pvParameters);
 void vTaskLEDPB0(void *pvParameters);

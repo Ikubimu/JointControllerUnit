@@ -65,3 +65,7 @@ bool CAN::read_message(CAN_Message *msg) {
 
     return true;
 }
+
+CAN_HandleTypeDef* CAN::getHandle() {
+    return hcan;
+}

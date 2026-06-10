@@ -108,7 +108,8 @@ CPP_SOURCES = \
 	$(SRC_DIR)/LOW/PWM.cpp \
 	$(SRC_DIR)/LOW/ADC.cpp \
 	$(SRC_DIR)/LOW/CAN.cpp \
-	$(SRC_DIR)/LOW/Peripherals.cpp
+	$(SRC_DIR)/LOW/Peripherals.cpp \
+	$(SRC_DIR)/CommunicationHandler.cpp
 
 ASM_SOURCES = \
 	$(DEVICE_DIR)/Source/Templates/gcc/startup_stm32f103xb.s

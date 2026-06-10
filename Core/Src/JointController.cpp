@@ -1,28 +1,6 @@
 #include "JointController.hpp"
+#include "CommunicationHandler.hpp"
 #include "Peripherals.hpp"
-
-void vTaskCAN(void *pvParameters) {
-  (void)pvParameters;
-  uint32_t counter = 0;
-  for (;;) {
-    counter++;
-    canMsg.data[0] = 0xAA;
-    canMsg.data[1] = 0xBB;
-    canMsg.data[2] = 0xCC;
-    canMsg.data[3] = 0xDD;
-    canMsg.data[4] = 0x11;
-    canMsg.data[5] = 0x22;
-    canMsg.data[6] = 0x33;
-    canMsg.data[7] = 0x44;
-
-    if (can.write_message(&canMsg))
-      printf("CAN TX: ID=0x%03lX Count=%lu\r\n", canMsg.id, counter);
-    else
-      printf("CAN TX ERROR\r\n");
-
-    vTaskDelay(pdMS_TO_TICKS(1000));
-  }
-}
 
 void vTaskADC(void *pvParameters) {
   (void)pvParameters;
@@ -53,10 +31,11 @@ void vTaskLEDPB0(void *pvParameters) {
 
 void jointMainTask(void *pvParameters) {
   (void)pvParameters;
-  can.start(0, 0);
-  canMsg.id = 0x123;
-  canMsg.dlc = 8;
-  canMsg.is_extended = false;
+
+  extern CAN_HandleTypeDef hcan;
+  CommunicationHandler comm(&hcan);
+  comm.start();
+  comm.setFilter(0x01);
 
   StateMachine &sm = StateMachine::get();
 

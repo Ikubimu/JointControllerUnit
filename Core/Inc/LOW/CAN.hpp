@@ -18,6 +18,7 @@ public:
     bool start(uint32_t filter_id, uint32_t filter_mask);
     bool write_message(const CAN_Message *msg);
     bool read_message(CAN_Message *msg);
+    CAN_HandleTypeDef* getHandle();
 private:
     CAN_HandleTypeDef *hcan;
     CAN_TxHeaderTypeDef txHeader;
