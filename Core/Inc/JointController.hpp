@@ -2,14 +2,6 @@
 #define JOINT_CONTROLLER_HPP
 
 #include <stdio.h>
-#include "DigitalOutput.hpp"
-#include "PWM.hpp"
-#include "ADC.hpp"
-#include "CAN.hpp"
-#include "StateMachine/StateMachine.hpp"
-#include "FlagUtils.hpp"
-#include "FreeRTOS.h"
-#include "task.h"
 
 void vTaskADC(void *pvParameters);
 void vTaskLED(void *pvParameters);

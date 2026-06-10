@@ -1,19 +1,16 @@
 #ifndef COMMUNICATION_HANDLER_HPP
 #define COMMUNICATION_HANDLER_HPP
 
-#include "stm32f1xx_hal.h"
-#include "CAN.hpp"
+#include <stdint.h>
 
 class CommunicationHandler {
 public:
-    CommunicationHandler(CAN_HandleTypeDef *hcan);
-    bool start();
-    bool setFilter(uint8_t device_id);
-private:
-    CAN can;
+    CommunicationHandler() = delete;
 
+    static bool start(uint8_t device_id);
+private:
     static void taskFunction(void *pvParameters);
-    void run();
+    static void run();
 };
 
 #endif

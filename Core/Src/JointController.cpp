@@ -1,6 +1,9 @@
 #include "JointController.hpp"
 #include "CommunicationHandler.hpp"
 #include "Peripherals.hpp"
+#include "StateMachine/StateMachine.hpp"
+#include "FreeRTOS.h"
+#include "task.h"
 
 void vTaskADC(void *pvParameters) {
   (void)pvParameters;
@@ -32,10 +35,7 @@ void vTaskLEDPB0(void *pvParameters) {
 void jointMainTask(void *pvParameters) {
   (void)pvParameters;
 
-  extern CAN_HandleTypeDef hcan;
-  CommunicationHandler comm(&hcan);
-  comm.start();
-  comm.setFilter(0x01);
+  CommunicationHandler::start(0x01);
 
   StateMachine &sm = StateMachine::get();
 
