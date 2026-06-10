@@ -36,6 +36,7 @@ INCLUDES = \
 	-I$(HAL_DIR)/Inc \
 	-I$(SRC_DIR)/../Inc \
 	-I$(SRC_DIR)/../Inc/LOW \
+	-I$(SRC_DIR)/../Inc/StateMachine \
 	-I$(FREERTOS_DIR) \
 	-I$(FREERTOS_DIR)/Source/include \
 	-I$(FREERTOS_DIR)/Source/portable/GCC/ARM_CM3
@@ -100,6 +101,8 @@ C_SOURCES = \
 # C++ source files
 CPP_SOURCES = \
 	$(SRC_DIR)/main.cpp \
+	$(SRC_DIR)/StateMachine/State.cpp \
+	$(SRC_DIR)/StateMachine/StateMachine.cpp \
 	$(SRC_DIR)/LOW/DigitalOutput.cpp \
 	$(SRC_DIR)/LOW/PWM.cpp \
 	$(SRC_DIR)/LOW/ADC.cpp \

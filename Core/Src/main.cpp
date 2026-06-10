@@ -26,6 +26,7 @@
 #include "PWM.hpp"
 #include "ADC.hpp"
 #include "CAN.hpp"
+#include "StateMachine/StateMachine.hpp"
 #include "FreeRTOS.h"
 #include "task.h"
 /* USER CODE END Includes */
@@ -179,6 +180,8 @@ int main(void)
   xTaskCreate(vTaskADC, "ADC", 128, NULL, 1, NULL);
   xTaskCreate(vTaskLED, "LED", 128, NULL, 1, NULL);
   xTaskCreate(vTaskLEDPB0, "LED0", 128, NULL, 1, NULL);
+
+  StateMachine& sm = StateMachine::get();
 
   vTaskStartScheduler();
   /* USER CODE END 2 */
