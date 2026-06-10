@@ -13,7 +13,7 @@ StateMachine& StateMachine::get() {
         root.addState(IDLE, 1);
         root.addState(FAULT, 2);
 
-        sub.addState(STAN_BY, 0);
+        sub.addState(STAND_BY, 0);
         sub.addState(ACTION, 1);
         sub.addState(PAUSE, 2);
         root.states[IDLE].setSubMachine(&sub);
@@ -24,8 +24,8 @@ StateMachine& StateMachine::get() {
         sub.addTransition(0, [] { return flagGet(ACTION_MOVE_FLAG); }, ACTION);
         sub.addTransition(1, [] { return flagGet(ACTION_STOP_FLAG); }, PAUSE);
         sub.addTransition(2, [] { return flagGet(ACTION_RESUME_FLAG); }, ACTION);
-        sub.addTransition(2, [] { return flagGet(ACTION_IDLE_FLAG); }, STAN_BY);
-        sub.addTransition(1, [] { return flagGet(ACTION_IDLE_FLAG); }, STAN_BY);
+        sub.addTransition(2, [] { return flagGet(ACTION_IDLE_FLAG); }, STAND_BY);
+        sub.addTransition(1, [] { return flagGet(ACTION_IDLE_FLAG); }, STAND_BY);
     }
 
     return root;

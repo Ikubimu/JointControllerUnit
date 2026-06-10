@@ -9,7 +9,7 @@ enum StateID : uint8_t {
     INIT = 0,
     IDLE,
     FAULT,
-    STAN_BY,
+    STAND_BY,
     ACTION,
     PAUSE
 };
