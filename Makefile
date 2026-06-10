@@ -101,6 +101,7 @@ C_SOURCES = \
 # C++ source files
 CPP_SOURCES = \
 	$(SRC_DIR)/main.cpp \
+	$(SRC_DIR)/JointController.cpp \
 	$(SRC_DIR)/StateMachine/State.cpp \
 	$(SRC_DIR)/StateMachine/StateMachine.cpp \
 	$(SRC_DIR)/LOW/DigitalOutput.cpp \
