@@ -1,30 +1,28 @@
 #include "StateMachine.hpp"
 
-StateMachine* StateMachine::instance = nullptr;
-
 StateMachine& StateMachine::get() {
-    if (instance == nullptr) {
-        instance = new StateMachine();
+    static StateMachine root;
+    static StateMachine sub;
+    static bool init = false;
 
-        instance->addState(INIT, 0);
-        instance->addState(IDLE, 1);
-        instance->addState(FAULT, 2);
+    if (!init) {
+        init = true;
 
-        instance->idleSub = new StateMachine();
-        instance->idleSub->addState(STAN_BY, 0);
-        instance->idleSub->addState(ACTION, 1);
-        instance->idleSub->addState(PAUSE, 2);
-        instance->states[IDLE].setSubMachine(instance->idleSub);
+        root.addState(INIT, 0);
+        root.addState(IDLE, 1);
+        root.addState(FAULT, 2);
+
+        sub.addState(STAN_BY, 0);
+        sub.addState(ACTION, 1);
+        sub.addState(PAUSE, 2);
+        root.states[IDLE].setSubMachine(&sub);
     }
-    return *instance;
+
+    return root;
 }
 
 StateMachine::StateMachine()
-    : numStates(0), currentState(0), idleSub(nullptr) {
-}
-
-StateMachine::~StateMachine() {
-    delete idleSub;
+    : numStates(0), currentState(0) {
 }
 
 bool StateMachine::addState(uint8_t id, uint8_t index) {

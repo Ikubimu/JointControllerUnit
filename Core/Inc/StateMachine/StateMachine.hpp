@@ -17,7 +17,6 @@ enum StateID : uint8_t {
 class StateMachine {
 public:
     static StateMachine& get();
-    ~StateMachine();
 
     bool addState(uint8_t id, uint8_t index);
     State* getState(uint8_t index);
@@ -40,8 +39,6 @@ private:
     State states[6];
     uint8_t numStates;
     uint8_t currentState;
-    StateMachine* idleSub;
-    static StateMachine* instance;
 };
 
 #endif
