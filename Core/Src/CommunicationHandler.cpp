@@ -1,11 +1,13 @@
 #include "CommunicationHandler.hpp"
-#include "CAN.hpp"
 #include <stdio.h>
 #include "FreeRTOS.h"
 #include "task.h"
 
 extern CAN_HandleTypeDef hcan;
 static CAN canInstance(&hcan);
+
+CommunicationHandler::ServiceEntry CommunicationHandler::services[MAX_SERVICES] = {};
+uint8_t CommunicationHandler::numServices = 0;
 
 bool CommunicationHandler::start(uint8_t device_id) {
     static bool initialized = false;
@@ -30,6 +32,15 @@ bool CommunicationHandler::start(uint8_t device_id) {
     return xTaskCreate(taskFunction, "CAN", 128, NULL, 1, NULL) == pdPASS;
 }
 
+bool CommunicationHandler::registerService(uint16_t canId,
+        std::function<void(const CAN_Message*)> callback) {
+    if (numServices >= MAX_SERVICES)
+        return false;
+    services[numServices] = {canId, std::move(callback)};
+    numServices++;
+    return true;
+}
+
 void CommunicationHandler::taskFunction(void *pvParameters) {
     (void)pvParameters;
     run();
@@ -40,11 +51,21 @@ void CommunicationHandler::run() {
         while (HAL_CAN_GetRxFifoFillLevel(canInstance.getHandle(), CAN_RX_FIFO0) > 0) {
             CAN_Message rxMsg;
             if (canInstance.read_message(&rxMsg)) {
-                printf("CAN RX: ID=0x%03lX %s DLC=%u Data=",
-                       rxMsg.id, rxMsg.is_extended ? "EXT" : "STD", rxMsg.dlc);
-                for (uint8_t i = 0; i < rxMsg.dlc; i++)
-                    printf("%02X ", rxMsg.data[i]);
-                printf("\r\n");
+                bool handled = false;
+                for (uint8_t i = 0; i < numServices; i++) {
+                    if (services[i].id == rxMsg.id) {
+                        services[i].callback(&rxMsg);
+                        handled = true;
+                        break;
+                    }
+                }
+                if (!handled) {
+                    printf("CAN RX (unhandled): ID=0x%03lX DLC=%u Data=",
+                           rxMsg.id, rxMsg.dlc);
+                    for (uint8_t i = 0; i < rxMsg.dlc; i++)
+                        printf("%02X ", rxMsg.data[i]);
+                    printf("\r\n");
+                }
 
                 if (canInstance.write_message(&rxMsg))
                     printf("CAN TX echo OK\r\n");

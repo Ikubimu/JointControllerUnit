@@ -2,6 +2,7 @@
 #include "CommunicationHandler.hpp"
 #include "Peripherals.hpp"
 #include "StateMachine/StateMachine.hpp"
+#include "FlagUtils.hpp"
 #include "FreeRTOS.h"
 #include "task.h"
 
@@ -35,6 +36,12 @@ void vTaskLEDPB0(void *pvParameters) {
 void jointMainTask(void *pvParameters) {
   (void)pvParameters;
 
+  CommunicationHandler::registerService(0x0001, [](const CAN_Message*) {
+      flagSet(ERROR_FLAG);
+  });
+  CommunicationHandler::registerService(0x0101, [](const CAN_Message*) {
+      flagSet(COMMUNICATION_OK_FLAG);
+  });
   CommunicationHandler::start(0x01);
 
   StateMachine &sm = StateMachine::get();
