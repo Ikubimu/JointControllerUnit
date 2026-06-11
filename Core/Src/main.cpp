@@ -110,7 +110,6 @@ int main(void)
   MX_USART1_UART_Init();
   MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
-  xTaskCreate(vTaskADC, "ADC", 128, NULL, 1, NULL);
   xTaskCreate(vTaskLED, "LED", 128, NULL, 1, NULL);
   xTaskCreate(vTaskLEDPB0, "LED0", 128, NULL, 1, NULL);
   xTaskCreate(jointMainTask, "joint_main", 256, NULL, 1, NULL);

@@ -7,16 +7,6 @@
 #include "FreeRTOS.h"
 #include "task.h"
 
-void vTaskADC(void *pvParameters) {
-  (void)pvParameters;
-  for (;;) {
-    uint32_t adc0 = adc.read_channel(ADC_CHANNEL_1);
-    uint32_t adc1 = adc.read_channel(ADC_CHANNEL_5);
-    printf("ADC0: %lu | ADC1: %lu\r\n", adc0, adc1);
-    vTaskDelay(pdMS_TO_TICKS(2000));
-  }
-}
-
 void vTaskLED(void *pvParameters) {
   (void)pvParameters;
   for (;;) {
