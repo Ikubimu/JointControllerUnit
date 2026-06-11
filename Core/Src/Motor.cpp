@@ -103,6 +103,25 @@ float Motor::get_position_rad() {
     return s_position_rad;
 }
 
+void Motor::set_position_rad(float rad) {
+    s_position_rad = rad;
+}
+
+void Motor::setMovement(float rad_s) {
+    if (rad_s < 0.0f) {
+        set_direction(DIR_CCW);
+        set_speed(-rad_s);
+    } else {
+        set_direction(DIR_CW);
+        set_speed(rad_s);
+    }
+}
+
+void Motor::calibration(float pos_rad, float ratio) {
+    set_position_rad(pos_rad);
+    set_ratio(ratio);
+}
+
 uint32_t Motor::get_position_raw() {
     return adc.read_channel(adc_channel);
 }

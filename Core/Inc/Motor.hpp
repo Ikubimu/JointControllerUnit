@@ -30,12 +30,12 @@ public:
     static float   get_actual_speed();
     static bool    get_direction();
 
-    void    set_speed(float rad_s);
-    void    set_direction(bool cw);
-    void    set_ratio(float ratio);
     float   get_position_rad();
     uint32_t get_position_raw();
     void    set_microstep(uint8_t step);
+   
+    void    setMovement(float rad_s);
+    void    calibration(float pos_rad, float ratio);
 
 private:
     Motor(PWM &pwm, ADC &adc, uint32_t adc_channel,
@@ -56,6 +56,10 @@ private:
     uint8_t      microstep;
 
     void apply_microstep();
+    void set_position_rad(float rad);
+    void set_ratio(float ratio);
+    void set_direction(bool cw);
+    void set_speed(float rad_s);
 
     static Motor *s_instance;
 };
