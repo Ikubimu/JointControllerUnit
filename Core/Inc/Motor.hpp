@@ -35,6 +35,7 @@ public:
     void    set_microstep(uint8_t step);
    
     void    setMovement(float rad_s);
+    void    stop();
     void    calibration(float pos_rad, float ratio);
 
 private:
@@ -54,6 +55,7 @@ private:
     DigitalOutput &dir;
 
     uint8_t      microstep;
+    bool         motor_on = false;
 
     void apply_microstep();
     void set_position_rad(float rad);

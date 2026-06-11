@@ -77,7 +77,6 @@ Motor::Motor(PWM &pwm, ADC &adc, uint32_t adc_channel,
       microstep(MICROSTEP_1)
 {
     s_ratio = ratio;
-    pwm.set_duty_percent(50.0f);
     set_direction(DIR_CW);
     apply_microstep();
     xTaskCreate(vTaskEncoder, "Encoder", 128, NULL, 1, NULL);
@@ -115,11 +114,22 @@ void Motor::setMovement(float rad_s) {
         set_direction(DIR_CW);
         set_speed(rad_s);
     }
+    if(!motor_on)
+    {
+        pwm.set_duty_percent(50.0f);
+        pwm.start();
+        motor_on = true;
+    }
 }
 
 void Motor::calibration(float pos_rad, float ratio) {
     set_position_rad(pos_rad);
     set_ratio(ratio);
+}
+
+void Motor::stop() {
+    pwm.stop();
+    motor_on = false;
 }
 
 uint32_t Motor::get_position_raw() {
