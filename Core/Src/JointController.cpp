@@ -1,5 +1,6 @@
 #include "JointController.hpp"
 #include "CommunicationHandler.hpp"
+#include "Motor.hpp"
 #include "Peripherals.hpp"
 #include "StateMachine/StateMachine.hpp"
 #include "FlagUtils.hpp"
@@ -44,6 +45,8 @@ void jointMainTask(void *pvParameters) {
   });
   CommunicationHandler::start(0x01);
 
+  Motor &motor = Motor::getInstance(pwm, adc, ADC_CHANNEL_1,
+                                  ms1, ms2, ms3, dir);
   StateMachine &sm = StateMachine::get();
 
   for (;;) {
