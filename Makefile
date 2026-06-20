@@ -64,6 +64,7 @@ LDFLAGS = -T$(PROJECT_ROOT)/STM32F103C8T6_FLASH.ld \
 	-Wl,--gc-sections -Wl,-Map=$(BUILD_DIR)/$(TARGET).map \
 	-mcpu=cortex-m3 -mthumb \
 	--specs=nano.specs --specs=nosys.specs \
+	-u _printf_float \
 	-Wl,--start-group -lc -lm -lstdc++ -lnosys -Wl,--end-group
 
 # C source files
