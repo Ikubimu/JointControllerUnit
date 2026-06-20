@@ -12,8 +12,9 @@ static const uint8_t microstep_table[5][3] = {
     {1, 1, 1},  // MICROSTEP_16 (sixteenth)
 };
 
-static volatile float   s_position_rad = 0.0f;
+static volatile float   s_position_deg = 0.0f;
 static volatile float   s_actual_speed = 0.0f;
+static volatile float   s_angle_deg = 0.0f;
 static volatile bool    s_direction = DIR_CW;
 
 static int32_t          s_rot_count = 0;
@@ -24,28 +25,23 @@ Motor *Motor::s_instance = nullptr;
 static void vTaskEncoder(void *pvParameters) {
     (void)pvParameters;
     static const float delta_sec = (float)ENCODER_READ_MS * 0.001f;
-    uint32_t prev_raw = Motor::getInstance().get_position_raw();
     for (;;) {
         vTaskDelay(pdMS_TO_TICKS(ENCODER_READ_MS));
         uint32_t curr_raw = Motor::getInstance().get_position_raw();
-        int32_t delta_raw = (int32_t)curr_raw - (int32_t)prev_raw;
+        s_angle_deg = (float)curr_raw * 360.0f / 4095.0f;
+        static float prev_pos = s_angle_deg;
+        float delta = s_angle_deg - prev_pos;
 
-        if (s_direction == DIR_CW) {
-            if (delta_raw < 0) {
-                delta_raw += 4096;
-                s_rot_count++;
-            }
-        } else {
-            if (delta_raw > 0) {
-                delta_raw -= 4096;
-                s_rot_count--;
-            }
+        if(abs(delta) > 180.0F && prev_pos > 180.0F) {
+            s_rot_count++;
+            delta = delta + 360.0F;
+        } else if(abs(delta) > 180.0F && prev_pos < 180.0F) {
+            s_rot_count--;
+            delta = delta - 360.0F;
         }
-
-        float frac = (float)curr_raw * 2.0f * MOTOR_PI / 4095.0f;
-        s_position_rad = frac / s_ratio + (2.0f * MOTOR_PI / s_ratio) * (float)s_rot_count;
-        s_actual_speed = (float)delta_raw * 2.0f * MOTOR_PI / (4095.0f * delta_sec * s_ratio);
-        prev_raw = curr_raw;
+        s_position_deg = s_angle_deg / s_ratio + (360.0f / s_ratio) * (float)s_rot_count;
+        s_actual_speed = delta / (delta_sec*s_ratio);
+        prev_pos = s_angle_deg;
     }
 }
 
@@ -82,9 +78,9 @@ Motor::Motor(PWM &pwm, ADC &adc, uint32_t adc_channel,
     xTaskCreate(vTaskEncoder, "Encoder", 128, NULL, 1, NULL);
 }
 
-void Motor::set_speed(float rad_s) {
-    if (rad_s < 0.0f) rad_s = 0.0f;
-    float freq = rad_s * (float)STEPS_PER_REV / (2.0f * MOTOR_PI);
+void Motor::set_speed(float deg_s) {
+    if (deg_s < 0.0f) deg_s = 0.0f;
+    float freq = deg_s * (float)STEPS_PER_REV / 360.0f;
     if (freq < 1.0f) freq = 0.0f;
     pwm.set_freq((uint32_t)freq);
 }
@@ -98,21 +94,25 @@ void Motor::set_ratio(float ratio) {
     s_ratio = ratio;
 }
 
-float Motor::get_position_rad() {
-    return s_position_rad;
+float Motor::get_position_deg() {
+    return s_position_deg;
 }
 
-void Motor::set_position_rad(float rad) {
-    s_position_rad = rad;
+float Motor::get_angle_deg() {
+    return s_angle_deg;
 }
 
-void Motor::setMovement(float rad_s) {
-    if (rad_s < 0.0f) {
+void Motor::set_position_deg(float deg) {
+    s_position_deg = deg;
+}
+
+void Motor::setMovement(float deg_s) {
+    if (deg_s < 0.0f) {
         set_direction(DIR_CCW);
-        set_speed(-rad_s);
+        set_speed(-deg_s);
     } else {
         set_direction(DIR_CW);
-        set_speed(rad_s);
+        set_speed(deg_s);
     }
     if(!motor_on)
     {
@@ -122,8 +122,8 @@ void Motor::setMovement(float rad_s) {
     }
 }
 
-void Motor::calibration(float pos_rad, float ratio) {
-    set_position_rad(pos_rad);
+void Motor::calibration(float pos_deg, float ratio) {
+    set_position_deg(pos_deg);
     set_ratio(ratio);
 }
 
