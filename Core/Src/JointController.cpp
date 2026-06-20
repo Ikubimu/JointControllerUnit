@@ -42,9 +42,8 @@ void jointMainTask(void *pvParameters) {
   for (;;) {
     sm.update();
     vTaskDelay(pdMS_TO_TICKS(1000));
-    printf("Position: %.2f deg | Speed: %.2f deg/s | Direction: %s | Angle: %.2f deg | raw: %lu\n",
+    printf("Position: %.2f deg | Speed: %.2f deg/s | Angle: %.2f deg | raw: %lu\n",
            motor.get_position_deg(), motor.get_actual_speed(),
-           motor.get_direction() ? "CW" : "CCW",
            motor.get_angle_deg(), (unsigned long)motor.get_position_raw());
   }
 }

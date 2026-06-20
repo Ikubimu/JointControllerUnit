@@ -37,6 +37,7 @@ INCLUDES = \
 	-I$(SRC_DIR)/../Inc \
 	-I$(SRC_DIR)/../Inc/LOW \
 	-I$(SRC_DIR)/../Inc/StateMachine \
+	-I$(SRC_DIR)/../Inc/Utils \
 	-I$(FREERTOS_DIR) \
 	-I$(FREERTOS_DIR)/Source/include \
 	-I$(FREERTOS_DIR)/Source/portable/GCC/ARM_CM3

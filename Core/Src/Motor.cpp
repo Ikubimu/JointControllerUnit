@@ -2,7 +2,7 @@
 #include "FreeRTOS.h"
 #include "task.h"
 
-#define ENCODER_READ_MS 100
+#define ENCODER_READ_MS 50
 
 static const uint8_t microstep_table[5][3] = {
     {0, 0, 0},  // MICROSTEP_1  (full)
@@ -42,6 +42,9 @@ static void vTaskEncoder(void *pvParameters) {
         s_position_deg = s_angle_deg / s_ratio + (360.0f / s_ratio) * (float)s_rot_count;
         s_actual_speed = delta / (delta_sec*s_ratio);
         prev_pos = s_angle_deg;
+
+        Motor::getInstance().angle_filter.add(s_angle_deg);
+        Motor::getInstance().speed_filter.add(s_actual_speed);
     }
 }
 
@@ -58,7 +61,7 @@ Motor& Motor::getInstance() {
 }
 
 float Motor::get_actual_speed() {
-    return s_actual_speed;
+    return speed_filter.get();
 }
 
 bool Motor::get_direction() {
@@ -70,6 +73,7 @@ Motor::Motor(PWM &pwm, ADC &adc, uint32_t adc_channel,
              DigitalOutput &dir, float ratio)
     : pwm(pwm), adc(adc), adc_channel(adc_channel),
       ms1(ms1), ms2(ms2), ms3(ms3), dir(dir),
+      speed_filter(), angle_filter(),
       microstep(MICROSTEP_1)
 {
     s_ratio = ratio;
@@ -99,7 +103,7 @@ float Motor::get_position_deg() {
 }
 
 float Motor::get_angle_deg() {
-    return s_angle_deg;
+    return angle_filter.get();
 }
 
 void Motor::set_position_deg(float deg) {

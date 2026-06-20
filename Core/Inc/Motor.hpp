@@ -4,6 +4,7 @@
 #include "PWM.hpp"
 #include "ADC.hpp"
 #include "DigitalOutput.hpp"
+#include "Utils/MovingAverage.hpp"
 #include <math.h>
 
 #define MOTOR_PI 3.14159265358979323846f
@@ -27,7 +28,7 @@ public:
                               DigitalOutput &ms1, DigitalOutput &ms2, DigitalOutput &ms3,
                               DigitalOutput &dir, float ratio = GEAR_RATIO);
     static Motor& getInstance();
-    static float   get_actual_speed();
+    float   get_actual_speed();
     static bool    get_direction();
 
     float   get_position_deg();
@@ -63,6 +64,10 @@ private:
     void set_ratio(float ratio);
     void set_direction(bool cw);
     void set_speed(float deg_s);
+
+public:
+    MovingAverage<float, 20> speed_filter;
+    MovingAverage<float, 20> angle_filter;
 
     static Motor *s_instance;
 };
