@@ -4,6 +4,8 @@
 #include <stdint.h>
 #include <functional>
 #include "CAN.hpp"
+#include "FreeRTOS.h"
+#include "queue.h"
 
 class CommunicationHandler {
 public:
@@ -12,8 +14,10 @@ public:
     static bool start(uint8_t device_id);
     static bool registerService(uint16_t canId,
                                 std::function<void(const CAN_Message*)> callback);
+    static bool updateJointStatus(float val1, float val2);
 private:
     static constexpr uint8_t MAX_SERVICES = 8;
+    static constexpr uint8_t TX_QUEUE_SIZE = 10;
 
     struct ServiceEntry {
         uint16_t id;
@@ -22,9 +26,13 @@ private:
 
     static void taskFunction(void *pvParameters);
     static void run();
+    static void processTxQueue();
 
     static ServiceEntry services[MAX_SERVICES];
     static uint8_t numServices;
+    static uint8_t deviceId;
+
+    static QueueHandle_t txQueue;
 };
 
 #endif

@@ -1,5 +1,6 @@
 #include "CommunicationHandler.hpp"
 #include <stdio.h>
+#include <string.h>
 #include "FreeRTOS.h"
 #include "task.h"
 
@@ -8,11 +9,17 @@ static CAN canInstance(&hcan);
 
 CommunicationHandler::ServiceEntry CommunicationHandler::services[MAX_SERVICES] = {};
 uint8_t CommunicationHandler::numServices = 0;
+uint8_t CommunicationHandler::deviceId = 0;
+
+QueueHandle_t CommunicationHandler::txQueue = nullptr;
 
 bool CommunicationHandler::start(uint8_t device_id) {
     static bool initialized = false;
     if (initialized) return true;
     initialized = true;
+
+    deviceId = device_id;
+    txQueue = xQueueCreate(TX_QUEUE_SIZE, sizeof(CAN_Message));
 
     if (!canInstance.start(0, 0))
         return false;
@@ -41,9 +48,30 @@ bool CommunicationHandler::registerService(uint16_t canId,
     return true;
 }
 
+bool CommunicationHandler::updateJointStatus(float val1, float val2) {
+    CAN_Message msg;
+    msg.id = ((uint32_t)deviceId << 8) | 0x02;
+    msg.dlc = 8;
+    msg.is_extended = false;
+    memcpy(&msg.data[0], &val1, sizeof(float));
+    memcpy(&msg.data[4], &val2, sizeof(float));
+    return xQueueSend(txQueue, &msg, 0) == pdTRUE;
+}
+
 void CommunicationHandler::taskFunction(void *pvParameters) {
     (void)pvParameters;
     run();
+}
+
+void CommunicationHandler::processTxQueue() {
+    CAN_Message msg;
+    while (xQueuePeek(txQueue, &msg, 0) == pdTRUE) {
+        if (canInstance.write_message(&msg)) {
+            xQueueReceive(txQueue, &msg, 0);
+        } else {
+            break;
+        }
+    }
 }
 
 void CommunicationHandler::run() {
@@ -74,6 +102,7 @@ void CommunicationHandler::run() {
             }
         }
 
+        processTxQueue();
         vTaskDelay(pdMS_TO_TICKS(100));
     }
 }

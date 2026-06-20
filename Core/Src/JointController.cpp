@@ -24,6 +24,13 @@ void vTaskLEDPB0(void *pvParameters) {
   }
 }
 
+void publishJointStatus() {
+    CommunicationHandler::updateJointStatus(
+        Motor::getInstance().get_position_deg(),
+        Motor::getInstance().get_actual_speed()
+    );
+}
+
 void jointMainTask(void *pvParameters) {
   (void)pvParameters;
 
@@ -41,6 +48,7 @@ void jointMainTask(void *pvParameters) {
 
   for (;;) {
     sm.update();
+    publishJointStatus();
     vTaskDelay(pdMS_TO_TICKS(1000));
     printf("Position: %.2f deg | Speed: %.2f deg/s | Angle: %.2f deg | raw: %lu\n",
            motor.get_position_deg(), motor.get_actual_speed(),
