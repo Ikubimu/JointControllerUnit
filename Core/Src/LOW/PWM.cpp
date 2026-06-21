@@ -10,6 +10,7 @@ void PWM::apply_duty() {
 }
 
 void PWM::start() {
+    period = __HAL_TIM_GET_AUTORELOAD(htim) + 1;
     HAL_TIM_PWM_Start(htim, channel);
 }
 
