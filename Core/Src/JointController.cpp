@@ -1,11 +1,13 @@
 #include "JointController.hpp"
 #include "CommunicationHandler.hpp"
 #include "Motor.hpp"
+#include "Control.hpp"
 #include "Peripherals.hpp"
 #include "StateMachine/StateMachine.hpp"
 #include "FlagUtils.hpp"
 #include "FreeRTOS.h"
 #include "task.h"
+#include <string.h>
 
 void vTaskLED(void *pvParameters) {
   (void)pvParameters;
@@ -40,10 +42,23 @@ void jointMainTask(void *pvParameters) {
   CommunicationHandler::registerService(0x0101, [](const CAN_Message*) {
       flagSet(COMMUNICATION_OK_FLAG);
   });
+
+  flagSet(COMMUNICATION_OK_FLAG); // Just for testing, remove this line in production
   CommunicationHandler::start(0x01);
 
   Motor &motor = Motor::getInstance(pwm, adc, ADC_CHANNEL_1,
                                   ms1, ms2, ms3, dir);
+  Control &control = Control::getInstance(motor);
+  (void)control;
+
+  CommunicationHandler::registerService(0x0103, [](const CAN_Message* msg) {
+      float pos, speed;
+      memcpy(&pos, &msg->data[0], sizeof(float));
+      memcpy(&speed, &msg->data[4], sizeof(float));
+      Control::getInstance().Move(pos, speed);
+      printf("Move: Position = %.2f deg, Speed = %.2f deg/s\n", pos, speed);
+  });
+
   StateMachine &sm = StateMachine::get();
 
   for (;;) {
