@@ -3,8 +3,6 @@
 #include <stdio.h>
 #include "task.h"
 
-#define ENCODER_READ_MS 50
-
 static const uint8_t microstep_table[5][3] = {
     {0, 0, 0},  // MICROSTEP_1  (full)
     {1, 0, 0},  // MICROSTEP_2  (half)
@@ -74,7 +72,6 @@ Motor::Motor(PWM &pwm, ADC &adc, uint32_t adc_channel,
              DigitalOutput &dir, float ratio)
     : pwm(pwm), adc(adc), adc_channel(adc_channel),
       ms1(ms1), ms2(ms2), ms3(ms3), dir(dir),
-      speed_filter(), angle_filter(),
       microstep(MICROSTEP_1)
 {
     s_ratio = ratio;

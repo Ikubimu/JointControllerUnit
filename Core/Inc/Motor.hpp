@@ -22,6 +22,8 @@
 
 #define GEAR_RATIO 22.0f
 
+#define ENCODER_READ_MS 10
+
 class Motor {
 public:
     static Motor& getInstance(PWM &pwm, ADC &adc, uint32_t adc_channel,
