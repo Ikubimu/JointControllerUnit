@@ -1,5 +1,6 @@
 #include "Motor.hpp"
 #include "FreeRTOS.h"
+#include <stdio.h>
 #include "task.h"
 
 #define ENCODER_READ_MS 50
@@ -86,7 +87,7 @@ void Motor::set_speed(float deg_s) {
     if (deg_s < 0.0f) deg_s = 0.0f;
     float freq = deg_s * (float)STEPS_PER_REV / 360.0f;
     if (freq < 1.0f) freq = 0.0f;
-    pwm.set_freq((uint32_t)freq);
+    pwm.set_freq((uint32_t)freq*8);
 }
 
 void Motor::set_direction(bool cw) {
@@ -111,6 +112,11 @@ void Motor::set_position_deg(float deg) {
 }
 
 void Motor::setMovement(float deg_s) {
+    deg_s = deg_s*s_ratio;
+    if(deg_s == 0.0f) {
+        stop();
+        return;
+    }
     if (deg_s < 0.0f) {
         set_direction(DIR_CCW);
         set_speed(-deg_s);
