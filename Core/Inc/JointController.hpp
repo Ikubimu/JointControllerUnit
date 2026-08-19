@@ -3,8 +3,6 @@
 
 #include <stdio.h>
 
-void vTaskLED(void *pvParameters);
-void vTaskLEDPB0(void *pvParameters);
 void jointMainTask(void *pvParameters);
 
 #endif

@@ -9,23 +9,6 @@
 #include "task.h"
 #include <string.h>
 
-void vTaskLED(void *pvParameters) {
-  (void)pvParameters;
-  for (;;) {
-    led.toggle();
-    out1.write(true);
-    vTaskDelay(pdMS_TO_TICKS(1000));
-  }
-}
-
-void vTaskLEDPB0(void *pvParameters) {
-  (void)pvParameters;
-  for (;;) {
-    ledPB0.toggle();
-    vTaskDelay(pdMS_TO_TICKS(350));
-  }
-}
-
 void publishJointStatus() {
     CommunicationHandler::updateJointStatus(
         Motor::getInstance().get_position_deg(),
