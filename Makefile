@@ -113,6 +113,7 @@ CPP_SOURCES = \
 	$(SRC_DIR)/LOW/Peripherals.cpp \
 	$(SRC_DIR)/CommunicationHandler.cpp \
 	$(SRC_DIR)/Motor.cpp \
+	$(SRC_DIR)/KalmanFilter.cpp \
 	$(SRC_DIR)/Control.cpp
 
 ASM_SOURCES = \

@@ -61,7 +61,7 @@ bool CommunicationHandler::registerMasterService(uint8_t canCmd,
 
 bool CommunicationHandler::updateJointStatus(float val1, float val2) {
     CAN_Message msg;
-    msg.id = ((uint32_t)deviceId << 8) | 0x02;
+    msg.id = ((uint32_t)deviceId << 8) | CMD_STATUS;
     msg.dlc = 8;
     msg.is_extended = false;
     memcpy(&msg.data[0], &val1, sizeof(float));

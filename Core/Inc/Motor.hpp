@@ -4,7 +4,7 @@
 #include "PWM.hpp"
 #include "ADC.hpp"
 #include "DigitalOutput.hpp"
-#include "Utils/MovingAverage.hpp"
+#include "KalmanFilter.hpp"
 #include <math.h>
 
 #define MOTOR_PI 3.14159265358979323846f
@@ -68,8 +68,7 @@ private:
     void set_speed(float deg_s);
 
 public:
-    MovingAverage<float, 20> speed_filter;
-    MovingAverage<float, 20> angle_filter;
+    KalmanFilter kalman;
 
     static Motor *s_instance;
 };

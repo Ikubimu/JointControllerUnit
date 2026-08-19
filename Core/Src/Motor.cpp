@@ -42,8 +42,7 @@ static void vTaskEncoder(void *pvParameters) {
         s_actual_speed = delta / (delta_sec*s_ratio);
         prev_pos = s_angle_deg;
 
-        Motor::getInstance().angle_filter.add(s_angle_deg);
-        Motor::getInstance().speed_filter.add(s_actual_speed);
+        Motor::getInstance().kalman.update(s_angle_deg, s_actual_speed, s_actual_speed);
     }
 }
 
@@ -60,7 +59,7 @@ Motor& Motor::getInstance() {
 }
 
 float Motor::get_actual_speed() {
-    return speed_filter.get();
+    return kalman.get_velocity();
 }
 
 bool Motor::get_direction() {
@@ -72,10 +71,11 @@ Motor::Motor(PWM &pwm, ADC &adc, uint32_t adc_channel,
              DigitalOutput &dir, float ratio)
     : pwm(pwm), adc(adc), adc_channel(adc_channel),
       ms1(ms1), ms2(ms2), ms3(ms3), dir(dir),
-      microstep(MICROSTEP_1)
+      microstep(MICROSTEP_1), kalman(0.0f, 0.0f)
 {
     s_ratio = ratio;
     set_direction(DIR_CW);
+    calibration(0.0f, ratio);
     apply_microstep();
     xTaskCreate(vTaskEncoder, "Encoder", 128, NULL, 1, NULL);
 }
@@ -101,7 +101,7 @@ float Motor::get_position_deg() {
 }
 
 float Motor::get_angle_deg() {
-    return angle_filter.get();
+    return kalman.get_position();
 }
 
 void Motor::set_position_deg(float deg) {
@@ -132,6 +132,7 @@ void Motor::setMovement(float deg_s) {
 void Motor::calibration(float pos_deg, float ratio) {
     set_position_deg(pos_deg);
     set_ratio(ratio);
+    kalman.init(pos_deg, 0.0f);
 }
 
 void Motor::stop() {

@@ -33,14 +33,29 @@ void jointMainTask(void *pvParameters) {
 
   //declare Communication Services
 
-  CommunicationHandler::registerMasterService(0x01, [](const CAN_Message*) {
+  CommunicationHandler::registerMasterService(CMD_ERROR, [](const CAN_Message*) {
       flagSet(ERROR_FLAG);
   });
-  CommunicationHandler::registerService(0x01, [](const CAN_Message*) {
+  CommunicationHandler::registerService(CMD_CALIBRATION, [](const CAN_Message* msg) {
+      float pos, speed;
+      memcpy(&pos, &msg->data[0], sizeof(float));
+      memcpy(&speed, &msg->data[4], sizeof(float));
+      Motor::getInstance().calibration(pos, speed);
+      printf("Calibration: Position = %.2f deg, Speed = %.2f deg/s\n", pos, speed);
       flagSet(COMMUNICATION_OK_FLAG);
   });
 
-  CommunicationHandler::registerService(0x03, [](const CAN_Message* msg) {
+  // CommunicationHandler::registerService(CMD_START, [](const CAN_Message* ) {
+  //       CommunicationHandler::registerService(CMD_MOVE_TARGET, [](const CAN_Message* msg) {
+  //           float pos, speed;
+  //           memcpy(&pos, &msg->data[0], sizeof(float));
+  //           memcpy(&speed, &msg->data[4], sizeof(float));
+  //           Control::getInstance().Move(pos, speed);
+  //           printf("Move: Position = %.2f deg, Speed = %.2f deg/s\n", pos, speed);
+  //       });
+  // });
+
+  CommunicationHandler::registerService(CMD_MOVE_TARGET, [](const CAN_Message* msg) {
       float pos, speed;
       memcpy(&pos, &msg->data[0], sizeof(float));
       memcpy(&speed, &msg->data[4], sizeof(float));
