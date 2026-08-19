@@ -36,28 +36,37 @@ void publishJointStatus() {
 void jointMainTask(void *pvParameters) {
   (void)pvParameters;
 
-  CommunicationHandler::registerService(0x0001, [](const CAN_Message*) {
-      flagSet(ERROR_FLAG);
-  });
-  CommunicationHandler::registerService(0x0101, [](const CAN_Message*) {
-      flagSet(COMMUNICATION_OK_FLAG);
-  });
+  uint8_t pinConfig = (GPIOB->IDR >> 4) & 0x0F;
+  pinConfig += 1;   // Id 0 are reserved for Master
 
   flagSet(COMMUNICATION_OK_FLAG); // Just for testing, remove this line in production
-  CommunicationHandler::start(0x01);
+  CommunicationHandler::start(pinConfig);
 
   Motor &motor = Motor::getInstance(pwm, adc, ADC_CHANNEL_1,
                                   ms1, ms2, ms3, dir);
   Control &control = Control::getInstance(motor);
   (void)control;
 
-  CommunicationHandler::registerService(0x0103, [](const CAN_Message* msg) {
+
+  //declare Communication Services
+
+  CommunicationHandler::registerMasterService(0x01, [](const CAN_Message*) {
+      flagSet(ERROR_FLAG);
+  });
+  CommunicationHandler::registerService(0x01, [](const CAN_Message*) {
+      flagSet(COMMUNICATION_OK_FLAG);
+  });
+
+  CommunicationHandler::registerService(0x03, [](const CAN_Message* msg) {
       float pos, speed;
       memcpy(&pos, &msg->data[0], sizeof(float));
       memcpy(&speed, &msg->data[4], sizeof(float));
       Control::getInstance().Move(pos, speed);
       printf("Move: Position = %.2f deg, Speed = %.2f deg/s\n", pos, speed);
   });
+
+
+
 
   StateMachine &sm = StateMachine::get();
 

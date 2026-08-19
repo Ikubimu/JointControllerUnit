@@ -12,8 +12,10 @@ public:
     CommunicationHandler() = delete;
 
     static bool start(uint8_t device_id);
-    static bool registerService(uint16_t canId,
+    static bool registerService(uint8_t canCmd,
                                 std::function<void(const CAN_Message*)> callback);
+    static bool registerMasterService(uint8_t canCmd,
+                                      std::function<void(const CAN_Message*)> callback);
     static bool updateJointStatus(float val1, float val2);
 private:
     static constexpr uint8_t MAX_SERVICES = 8;

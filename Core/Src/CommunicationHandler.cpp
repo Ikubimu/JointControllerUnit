@@ -39,10 +39,21 @@ bool CommunicationHandler::start(uint8_t device_id) {
     return xTaskCreate(taskFunction, "CAN", 128, NULL, 1, NULL) == pdPASS;
 }
 
-bool CommunicationHandler::registerService(uint16_t canId,
+bool CommunicationHandler::registerService(uint8_t canCmd,
         std::function<void(const CAN_Message*)> callback) {
     if (numServices >= MAX_SERVICES)
         return false;
+    uint16_t canId = ((uint16_t)deviceId << 8) | canCmd;
+    services[numServices] = {canId, std::move(callback)};
+    numServices++;
+    return true;
+}
+
+bool CommunicationHandler::registerMasterService(uint8_t canCmd,
+        std::function<void(const CAN_Message*)> callback) {
+    if (numServices >= MAX_SERVICES)
+        return false;
+    uint16_t canId = (uint16_t)canCmd;
     services[numServices] = {canId, std::move(callback)};
     numServices++;
     return true;
