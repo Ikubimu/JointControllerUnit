@@ -5,13 +5,21 @@
 #include "FreeRTOS.h"
 #include "task.h"
 
+#define CONTROL_PERIOD_MS    20
+#define SIGMOID_K            0.25f
+#define SIGMOID_X0           20.0f
+
 class Control {
 public:
     static Control& getInstance(Motor &motor);
     static Control& getInstance();
 
     void Move(float position, float speed);
+    void SetSpeed(float deg_s);
     void Stop();
+
+    float GetTarget();
+    float GetOutput();
 
 private:
     Control(Motor &motor);
@@ -24,8 +32,15 @@ private:
     Motor &motor;
     TaskHandle_t taskHandle;
     volatile bool running;
+
     float targetPos;
     float targetSpeed;
+
+    float target;
+    float output;
+    float startOut;
+    int   startI;
+
     static Control *s_instance;
 };
 

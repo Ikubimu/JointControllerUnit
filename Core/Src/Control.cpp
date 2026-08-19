@@ -17,26 +17,40 @@ Control& Control::getInstance() {
 
 Control::Control(Motor &motor)
     : motor(motor), taskHandle(nullptr), running(false),
-      targetPos(0), targetSpeed(0) {
-    xTaskCreate(taskFunction, "Control", 128, this, 1, &taskHandle);
+      targetPos(0), targetSpeed(0),
+      target(0), output(0), startOut(0), startI(0) {
+    xTaskCreate(taskFunction, "Control", 256, this, 2, &taskHandle);
 }
 
 void Control::taskFunction(void *pvParameters) {
     Control *self = static_cast<Control*>(pvParameters);
+    TickType_t lastWake = xTaskGetTickCount();
+
     for (;;) {
         ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
         self->running = true;
+        self->startI = 0;
+        self->startOut = self->output;
+
         while (self->running) {
+            vTaskDelayUntil(&lastWake, pdMS_TO_TICKS(CONTROL_PERIOD_MS));
+
             float error = self->targetPos - self->motor.get_position_deg();
             if (fabs(error) < DEADBAND) {
                 self->motor.stop();
+                self->running = false;
                 break;
             }
+
+            float L = self->target - self->startOut;
+            self->output = self->startOut + L / (1.0f + expf(-SIGMOID_K * (self->startI - SIGMOID_X0)));
+
             if (error > 0)
-                self->motor.setMovement(self->targetSpeed);
+                self->motor.setMovement(self->output);
             else
-                self->motor.setMovement(-self->targetSpeed);
-            vTaskDelay(pdMS_TO_TICKS(2 * ENCODER_READ_MS));
+                self->motor.setMovement(-self->output);
+
+            self->startI++;
         }
     }
 }
@@ -44,9 +58,19 @@ void Control::taskFunction(void *pvParameters) {
 void Control::Move(float position, float speed) {
     targetPos = position;
     targetSpeed = speed;
+    target = speed;
     xTaskNotifyGive(taskHandle);
+}
+
+void Control::SetSpeed(float deg_s) {
+    startOut = output;
+    target = deg_s;
+    startI = 0;
 }
 
 void Control::Stop() {
     running = false;
 }
+
+float Control::GetTarget() { return target; }
+float Control::GetOutput() { return output; }
