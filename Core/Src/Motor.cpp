@@ -23,12 +23,22 @@ Motor *Motor::s_instance = nullptr;
 
 static void vTaskEncoder(void *pvParameters) {
     (void)pvParameters;
-    static const float delta_sec = (float)ENCODER_READ_MS * 0.001f;
+    TickType_t xLastWakeTime = xTaskGetTickCount();
+    static float prev_pos = 0.0f;
+    static bool first_run = true;
+
     for (;;) {
-        vTaskDelay(pdMS_TO_TICKS(ENCODER_READ_MS));
+        vTaskDelayUntil(&xLastWakeTime, pdMS_TO_TICKS(ENCODER_READ_MS));
+
         uint32_t curr_raw = Motor::getInstance().get_position_raw();
         s_angle_deg = (float)curr_raw * 360.0f / 4095.0f;
-        static float prev_pos = s_angle_deg;
+
+        if (first_run) {
+            prev_pos = s_angle_deg;
+            first_run = false;
+            continue;
+        }
+
         float delta = s_angle_deg - prev_pos;
 
         if(abs(delta) > 180.0F && prev_pos > 180.0F) {
@@ -39,7 +49,7 @@ static void vTaskEncoder(void *pvParameters) {
             delta = delta - 360.0F;
         }
         s_position_deg = s_angle_deg / s_ratio + (360.0f / s_ratio) * (float)s_rot_count;
-        s_actual_speed = delta / (delta_sec*s_ratio);
+        s_actual_speed = delta / ((float)ENCODER_READ_MS * 0.001f * s_ratio);
         prev_pos = s_angle_deg;
 
         Motor::getInstance().kalman.update(s_angle_deg, s_actual_speed, s_actual_speed);
