@@ -81,12 +81,12 @@ Motor::Motor(PWM &pwm, ADC &adc, uint32_t adc_channel,
              DigitalOutput &dir, float ratio)
     : pwm(pwm), adc(adc), adc_channel(adc_channel),
       ms1(ms1), ms2(ms2), ms3(ms3), dir(dir),
-      microstep(MICROSTEP_1), kalman(0.0f, 0.0f)
+      microstep(0), kalman(0.0f, 0.0f)
 {
     s_ratio = ratio;
     set_direction(DIR_CW);
     calibration(0.0f, ratio);
-    apply_microstep();
+    set_microstep(MICROSTEP_1);
     xTaskCreate(vTaskEncoder, "Encoder", 128, NULL, 1, NULL);
 }
 
