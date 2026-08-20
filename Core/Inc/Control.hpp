@@ -5,9 +5,10 @@
 #include "FreeRTOS.h"
 #include "task.h"
 
-#define CONTROL_PERIOD_MS    20
-#define SIGMOID_K            0.25f
-#define SIGMOID_X0           20.0f
+#define CONTROL_PERIOD_MS      20
+#define SIGMOID_K              0.25f
+#define SIGMOID_X0             20.0f
+#define BRAKING_DISTANCE_DEG   30.0f
 
 class Control {
 public:
@@ -39,7 +40,9 @@ private:
     float target;
     float output;
     float startOut;
+    float braking_distance;
     int   startI;
+    bool  braking;
 
     static Control *s_instance;
 };
