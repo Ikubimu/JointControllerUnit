@@ -55,10 +55,7 @@ void Control::taskFunction(void *pvParameters) {
             self->output = self->startOut + L / (1.0f + expf(-SIGMOID_K * ((float)self->startI - SIGMOID_X0)));
             self->startI++;
 
-            if (error > 0)
-                self->motor.setMovement(self->output);
-            else
-                self->motor.setMovement(-self->output);
+            self->motor.setMovement(self->output);
         }
     }
 }
@@ -68,7 +65,7 @@ void Control::Move(float position, float speed) {
     targetSpeed = speed;
     target = speed;
     braking = false;
-    braking_distance = (4.0f * speed)/SIGMOID_K * (CONTROL_PERIOD_MS * 0.001f);
+    braking_distance = abs((4.0f * speed)/SIGMOID_K * (CONTROL_PERIOD_MS * 0.001f));
     xTaskNotifyGive(taskHandle);
 }
 
