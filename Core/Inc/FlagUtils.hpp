@@ -13,6 +13,8 @@
 
 inline volatile uint32_t flagBits = 0;
 
+inline volatile uint8_t errorCode = 0;
+
 inline void flagSet(uint8_t flag) {
     if (flag < 32)
         flagBits |= (1UL << flag);
@@ -26,5 +28,13 @@ inline bool flagGet(uint8_t flag) {
     return (flagBits >> flag) & 1UL;
 }
 inline void flagClearAll() { flagBits = 0; }
+
+inline uint8_t getErrorCode() {
+    return errorCode;
+}
+
+inline void setErrorCode(uint8_t code) {
+    errorCode = code;
+}
 
 #endif

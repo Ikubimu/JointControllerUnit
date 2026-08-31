@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <functional>
 #include "CAN.hpp"
+#include "FlagUtils.hpp"
 #include "FreeRTOS.h"
 #include "queue.h"
 
@@ -18,6 +19,17 @@
 #define CMD_RESUME       0x07
 #define CMD_STATUS       0x08
 
+#define PROPAGATE_ERROR_LIMIT 3
+
+// Error codes definitions
+#define NO_ERROR                        0x00
+#define ENCODER_ERROR                   0x01
+#define COLISION_ERROR                  0x02
+#define OUT_OF_RANGE_ERROR              0x03
+#define MOVE_FAILURE_ERROR              0x04
+#define CALIBRATION_FAILURE_ERROR       0x05
+#define UNKNOWN_ERROR                   0xAA
+
 
 class CommunicationHandler {
 public:
@@ -29,6 +41,8 @@ public:
     static bool registerMasterService(uint8_t canCmd,
                                       std::function<void(const CAN_Message*)> callback);
     static bool updateJointStatus(float val1, float val2);
+    static bool announceDevice(uint8_t device_id);
+    static bool propagateError(uint8_t errorCode);
 private:
     static constexpr uint8_t MAX_SERVICES = 8;
     static constexpr uint8_t TX_QUEUE_SIZE = 10;

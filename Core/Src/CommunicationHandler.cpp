@@ -69,6 +69,30 @@ bool CommunicationHandler::updateJointStatus(float val1, float val2) {
     return xQueueSend(txQueue, &msg, 0) == pdTRUE;
 }
 
+bool CommunicationHandler::announceDevice(uint8_t device_id) {
+    CAN_Message msg;
+    msg.id = ((uint32_t)device_id << 8) | CMD_ANNOUNCE;
+    msg.dlc = 0;
+    msg.is_extended = false;
+    return xQueueSend(txQueue, &msg, 0) == pdTRUE;
+}
+
+bool CommunicationHandler::propagateError(uint8_t errorCode) {
+
+    static uint8_t lastErrorSent = 0;
+    if(lastErrorSent >= PROPAGATE_ERROR_LIMIT) {
+        return true; // Avoid sending the same error code repeatedly
+    }
+    lastErrorSent++;
+
+    CAN_Message msg;
+    msg.id = ((uint32_t)deviceId << 8) | CMD_ERROR;
+    msg.dlc = 1;
+    msg.is_extended = false;
+    msg.data[0] = errorCode;
+    return xQueueSend(txQueue, &msg, 0) == pdTRUE;
+}
+
 void CommunicationHandler::taskFunction(void *pvParameters) {
     (void)pvParameters;
     run();
@@ -104,12 +128,16 @@ void CommunicationHandler::run() {
                     for (uint8_t i = 0; i < rxMsg.dlc; i++)
                         printf("%02X ", rxMsg.data[i]);
                     printf("\r\n");
+                    if((rxMsg.id & 0x00FF) == CMD_ERROR && getErrorCode() == NO_ERROR) {
+                        setErrorCode(UNKNOWN_ERROR);
+                        flagSet(ERROR_FLAG);
+                    }
                 }
 
-                if (canInstance.write_message(&rxMsg))
-                    printf("CAN TX echo OK\r\n");
-                else
-                    printf("CAN TX echo ERROR\r\n");
+                // if (canInstance.write_message(&rxMsg))
+                //     printf("CAN TX echo OK\r\n");
+                // else
+                //     printf("CAN TX echo ERROR\r\n");
             }
         }
 
