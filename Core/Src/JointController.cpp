@@ -47,11 +47,16 @@ void jointMainTask(void *pvParameters) {
       flagSet(ERROR_FLAG);
   });
   CommunicationHandler::registerService(CMD_CALIBRATION, [](const CAN_Message* msg) {
-      float pos, speed;
-      memcpy(&pos, &msg->data[0], sizeof(float));
-      memcpy(&speed, &msg->data[4], sizeof(float));
-      Motor::getInstance().calibration(pos, speed);
-      printf("Calibration: Position = %.2f deg, Speed = %.2f deg/s\n", pos, speed);
+      uint16_t pos, pos_min, pos_max;
+      int16_t ratio;
+      memcpy(&pos,      &msg->data[0], sizeof(uint16_t));
+      memcpy(&ratio,    &msg->data[2], sizeof(int16_t));
+      memcpy(&pos_min,  &msg->data[4], sizeof(uint16_t));
+      memcpy(&pos_max,  &msg->data[6], sizeof(uint16_t));
+      Motor::getInstance().calibration(pos, ratio, pos_min, pos_max);
+      printf("Calibration: Pos = %.2f deg, Ratio = %.2f, Min = %.2f deg, Max = %.2f deg\n",
+             (float)pos / 100.0f, (float)ratio / 100.0f,
+             (float)pos_min / 100.0f, (float)pos_max / 100.0f);
       flagSet(COMMUNICATION_OK_FLAG);
   });
 

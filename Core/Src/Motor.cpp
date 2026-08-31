@@ -81,11 +81,11 @@ Motor::Motor(PWM &pwm, ADC &adc, uint32_t adc_channel,
              DigitalOutput &dir, float ratio)
     : pwm(pwm), adc(adc), adc_channel(adc_channel),
       ms1(ms1), ms2(ms2), ms3(ms3), dir(dir),
-      microstep(0), kalman(0.0f, 0.0f)
+      microstep(0), kalman(0.0f, 0.0f), pos_min(0.0f), pos_max(360.0f)
 {
     s_ratio = ratio;
     set_direction(DIR_CW);
-    calibration(0.0f, ratio);
+    calibration(0, (int16_t)(ratio * 100.0f), 0, 36000);
     set_microstep(MICROSTEP_1);
     xTaskCreate(vTaskEncoder, "Encoder", 128, NULL, 1, NULL);
 }
@@ -139,11 +139,18 @@ void Motor::setMovement(float deg_s) {
     }
 }
 
-void Motor::calibration(float pos_deg, float ratio) {
+void Motor::calibration(uint16_t pos, int16_t ratio, uint16_t pos_min, uint16_t pos_max) {
+    float pos_deg = (float)pos / 100.0f;
+    float ratio_f = (float)ratio / 100.0f;
+    this->pos_min = (float)pos_min / 100.0f;
+    this->pos_max = (float)pos_max / 100.0f;
     set_position_deg(pos_deg);
-    set_ratio(ratio);
+    set_ratio(ratio_f);
     kalman.init(pos_deg, 0.0f);
 }
+
+float Motor::get_pos_min() { return pos_min; }
+float Motor::get_pos_max() { return pos_max; }
 
 void Motor::stop() {
     pwm.stop();

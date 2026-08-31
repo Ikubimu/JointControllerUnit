@@ -40,7 +40,9 @@ public:
    
     void    setMovement(float deg_s);
     void    stop();
-    void    calibration(float pos_deg, float ratio);
+    void    calibration(uint16_t pos, int16_t ratio, uint16_t pos_min, uint16_t pos_max);
+    float   get_pos_min();
+    float   get_pos_max();
 
 private:
     Motor(PWM &pwm, ADC &adc, uint32_t adc_channel,
@@ -60,6 +62,8 @@ private:
 
     uint8_t      microstep;
     bool         motor_on = false;
+    float        pos_min;
+    float        pos_max;
 
     void apply_microstep();
     void set_position_deg(float deg);
