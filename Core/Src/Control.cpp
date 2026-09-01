@@ -1,5 +1,7 @@
 #include "Control.hpp"
+#include "Protections.hpp"
 #include <math.h>
+#include <stdio.h>
 
 static constexpr float DEADBAND = 0.5f;
 
@@ -32,6 +34,7 @@ void Control::taskFunction(void *pvParameters) {
         self->braking = false;
         self->startI = 0;
         self->startOut = self->output;
+        Protections::resetMovement();
 
         while (self->running) {
             vTaskDelayUntil(&lastWake, pdMS_TO_TICKS(CONTROL_PERIOD_MS));
@@ -51,6 +54,12 @@ void Control::taskFunction(void *pvParameters) {
                 self->startI = 0;
             }
 
+            if (Protections::checkMovement(error)) {
+                self->motor.stop();
+                self->running = false;
+                break;
+            }
+
             float L = self->target - self->startOut;
             self->output = self->startOut + L / (1.0f + expf(-SIGMOID_K * ((float)self->startI - SIGMOID_X0)));
             self->startI++;
@@ -65,6 +74,7 @@ void Control::Move(float position, float speed) {
     targetSpeed = speed;
     target = speed;
     braking = false;
+    Protections::resetMovement();
     braking_distance = abs((4.0f * speed)/SIGMOID_K * (CONTROL_PERIOD_MS * 0.001f));
     xTaskNotifyGive(taskHandle);
 }

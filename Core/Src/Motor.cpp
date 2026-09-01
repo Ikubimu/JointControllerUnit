@@ -1,4 +1,5 @@
 #include "Motor.hpp"
+#include "Protections.hpp"
 #include "FreeRTOS.h"
 #include <stdio.h>
 #include "task.h"
@@ -48,6 +49,9 @@ static void vTaskEncoder(void *pvParameters) {
             s_rot_count--;
             delta = delta - 360.0F;
         }
+
+        Protections::checkEncoder(delta);
+
         s_position_deg = s_angle_deg / s_ratio + (360.0f / s_ratio) * (float)s_rot_count;
         s_actual_speed = delta / ((float)ENCODER_READ_MS * 0.001f * s_ratio);
         prev_pos = s_angle_deg;
@@ -81,7 +85,7 @@ Motor::Motor(PWM &pwm, ADC &adc, uint32_t adc_channel,
              DigitalOutput &dir, float ratio)
     : pwm(pwm), adc(adc), adc_channel(adc_channel),
       ms1(ms1), ms2(ms2), ms3(ms3), dir(dir),
-      microstep(0), kalman(0.0f, 0.0f), pos_min(0.0f), pos_max(360.0f)
+      microstep(0), pos_min(0.0f), pos_max(360.0f), kalman(0.0f, 0.0f)
 {
     s_ratio = ratio;
     set_direction(DIR_CW);

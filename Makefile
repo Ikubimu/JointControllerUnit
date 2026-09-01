@@ -114,6 +114,7 @@ CPP_SOURCES = \
 	$(SRC_DIR)/CommunicationHandler.cpp \
 	$(SRC_DIR)/Motor.cpp \
 	$(SRC_DIR)/KalmanFilter.cpp \
+	$(SRC_DIR)/Protections.cpp \
 	$(SRC_DIR)/Control.cpp
 
 ASM_SOURCES = \

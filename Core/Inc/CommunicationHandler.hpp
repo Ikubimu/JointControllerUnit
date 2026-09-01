@@ -28,6 +28,7 @@
 #define OUT_OF_RANGE_ERROR              0x03
 #define MOVE_FAILURE_ERROR              0x04
 #define CALIBRATION_FAILURE_ERROR       0x05
+#define COMMUNICATION_LOST_ERROR        0x06
 #define UNKNOWN_ERROR                   0xAA
 
 
