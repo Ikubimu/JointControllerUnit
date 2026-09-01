@@ -19,6 +19,7 @@ static volatile bool    s_direction = DIR_CW;
 
 static int32_t          s_rot_count = 0;
 static float            s_ratio = GEAR_RATIO;
+static float            s_position_offset = 0.0f;
 
 Motor *Motor::s_instance = nullptr;
 
@@ -52,7 +53,7 @@ static void vTaskEncoder(void *pvParameters) {
 
         Protections::checkEncoder(delta);
 
-        s_position_deg = s_angle_deg / s_ratio + (360.0f / s_ratio) * (float)s_rot_count;
+        s_position_deg = s_angle_deg / s_ratio + (360.0f / s_ratio) * (float)s_rot_count + s_position_offset;
         s_actual_speed = delta / ((float)ENCODER_READ_MS * 0.001f * s_ratio);
         prev_pos = s_angle_deg;
 
@@ -148,8 +149,10 @@ void Motor::calibration(uint16_t pos, int16_t ratio, uint16_t pos_min, uint16_t 
     float ratio_f = (float)ratio / 100.0f;
     this->pos_min = (float)pos_min / 100.0f;
     this->pos_max = (float)pos_max / 100.0f;
-    set_position_deg(pos_deg);
     set_ratio(ratio_f);
+    float current_pos = s_angle_deg / s_ratio + (360.0f / s_ratio) * (float)s_rot_count;
+    s_position_offset = pos_deg - current_pos;
+    s_position_deg = pos_deg;
     kalman.init(pos_deg, 0.0f);
 }
 
