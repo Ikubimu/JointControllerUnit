@@ -49,6 +49,9 @@ void jointMainTask(void *pvParameters) {
   CommunicationHandler::registerMasterService(CMD_ERROR, [](const CAN_Message*) {
       flagSet(ERROR_FLAG);
   });
+  CommunicationHandler::registerMasterService(CMD_WATCHDOG, [](const CAN_Message*) {
+      lastMasterMsg = xTaskGetTickCount();
+  });
   CommunicationHandler::registerService(CMD_CALIBRATION, [](const CAN_Message* msg) {
       lastMasterMsg = xTaskGetTickCount();
       uint16_t pos, pos_min, pos_max;

@@ -109,7 +109,7 @@ int main(void)
   MX_USART1_UART_Init();
   MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
-  xTaskCreate(jointMainTask, "joint_main", 256, NULL, 1, NULL);
+  xTaskCreate(jointMainTask, "joint_main", 512, NULL, 1, NULL);
 
   vTaskStartScheduler();
   /* USER CODE END 2 */

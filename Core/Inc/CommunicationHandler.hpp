@@ -18,6 +18,7 @@
 #define CMD_PAUSE        0x06
 #define CMD_RESUME       0x07
 #define CMD_STATUS       0x08
+#define CMD_WATCHDOG     0X09
 
 #define PROPAGATE_ERROR_LIMIT 3
 

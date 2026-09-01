@@ -36,7 +36,7 @@ bool CommunicationHandler::start(uint8_t device_id) {
     canFilter.FilterActivation = CAN_FILTER_ENABLE;
     HAL_CAN_ConfigFilter(canInstance.getHandle(), &canFilter);
 
-    return xTaskCreate(taskFunction, "CAN", 128, NULL, 1, NULL) == pdPASS;
+    return xTaskCreate(taskFunction, "CAN", 256, NULL, 1, NULL) == pdPASS;
 }
 
 bool CommunicationHandler::registerService(uint8_t canCmd,
@@ -123,11 +123,11 @@ void CommunicationHandler::run() {
                     }
                 }
                 if (!handled) {
-                    printf("CAN RX (unhandled): ID=0x%03lX DLC=%u Data=",
-                           rxMsg.id, rxMsg.dlc);
-                    for (uint8_t i = 0; i < rxMsg.dlc; i++)
-                        printf("%02X ", rxMsg.data[i]);
-                    printf("\r\n");
+                    // printf("CAN RX (unhandled): ID=0x%03lX DLC=%u Data=",
+                    //        rxMsg.id, rxMsg.dlc);
+                    // for (uint8_t i = 0; i < rxMsg.dlc; i++)
+                    //     printf("%02X ", rxMsg.data[i]);
+                    // printf("\r\n");
                     if((rxMsg.id & 0x00FF) == CMD_ERROR && getErrorCode() == NO_ERROR) {
                         setErrorCode(UNKNOWN_ERROR);
                         flagSet(ERROR_FLAG);
