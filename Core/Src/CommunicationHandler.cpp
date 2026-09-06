@@ -100,10 +100,19 @@ void CommunicationHandler::taskFunction(void *pvParameters) {
 
 void CommunicationHandler::processTxQueue() {
     CAN_Message msg;
+    static uint8_t error_tx_count = 0;
     while (xQueuePeek(txQueue, &msg, 0) == pdTRUE) {
         if (canInstance.write_message(&msg)) {
             xQueueReceive(txQueue, &msg, 0);
+            error_tx_count = 0;
         } else {
+            error_tx_count += 1;
+            if(error_tx_count = 1)
+            {
+                setErrorCode(UNKNOWN_ERROR);
+                propagateError(UNKNOWN_ERROR);
+                flagSet(ERROR_FLAG);
+            }
             break;
         }
     }
@@ -130,6 +139,7 @@ void CommunicationHandler::run() {
                     // printf("\r\n");
                     if((rxMsg.id & 0x00FF) == CMD_ERROR && getErrorCode() == NO_ERROR) {
                         setErrorCode(UNKNOWN_ERROR);
+                        propagateError(UNKNOWN_ERROR);
                         flagSet(ERROR_FLAG);
                     }
                 }
@@ -142,6 +152,6 @@ void CommunicationHandler::run() {
         }
 
         processTxQueue();
-        vTaskDelay(pdMS_TO_TICKS(100));
+        vTaskDelay(pdMS_TO_TICKS(5));
     }
 }
