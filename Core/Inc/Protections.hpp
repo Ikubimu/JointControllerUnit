@@ -6,7 +6,7 @@
 #define PROT_MAX_ENCODER_DELTA      100.0f
 #define PROT_COLLISION_TIMEOUT      50
 #define PROT_STALL_TIMEOUT          300
-#define PROT_MASTER_TIMEOUT_MS      10000
+#define PROT_MASTER_TIMEOUT_MS      1000
 
 class Protections {
 public:
